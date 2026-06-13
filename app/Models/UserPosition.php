@@ -5,6 +5,21 @@ use App\Traits\HasUlid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string $id
+ * @property string $user_id
+ * @property string $position_id
+ * @property string $organization_id
+ * @property string|null $direct_superior_id
+ * @property \Illuminate\Support\Carbon|null $effective_start_date
+ * @property \Illuminate\Support\Carbon|null $effective_end_date
+ * @property bool $is_current
+ * @property string|null $sk_number
+ * @property \Illuminate\Support\Carbon|null $sk_date
+ * @property string|null $created_by
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ */
 class UserPosition extends Model
 {
     use HasUlid;

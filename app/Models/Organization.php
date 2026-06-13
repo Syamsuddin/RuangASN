@@ -9,6 +9,31 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property string $id
+ * @property string|null $parent_id
+ * @property \App\Enums\OrganizationType $type
+ * @property string $name
+ * @property string|null $short_name
+ * @property string|null $code
+ * @property string|null $description
+ * @property string|null $address
+ * @property string|null $phone
+ * @property string|null $email
+ * @property string|null $logo_path
+ * @property bool $is_active
+ * @property \Illuminate\Support\Carbon|null $effective_start_date
+ * @property \Illuminate\Support\Carbon|null $effective_end_date
+ * @property int|null $lft
+ * @property int|null $rgt
+ * @property int $depth
+ * @property string|null $pemda_id
+ * @property string|null $created_by
+ * @property string|null $updated_by
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ */
 class Organization extends Model
 {
     use HasFactory;
@@ -63,6 +88,11 @@ class Organization extends Model
     public function positions(): HasMany
     {
         return $this->hasMany(Position::class);
+    }
+
+    public function teams(): HasMany
+    {
+        return $this->hasMany(Team::class);
     }
 
     public function isPemda(): bool

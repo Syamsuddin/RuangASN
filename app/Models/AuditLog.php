@@ -5,6 +5,21 @@ use App\Traits\HasUlid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string $id
+ * @property string|null $organization_id
+ * @property string|null $user_id
+ * @property string $action
+ * @property string|null $auditable_type
+ * @property string|null $auditable_id
+ * @property array|null $old_values
+ * @property array|null $new_values
+ * @property string|null $ip_address
+ * @property string|null $user_agent
+ * @property string|null $url
+ * @property string|null $hash
+ * @property \Illuminate\Support\Carbon|null $created_at
+ */
 class AuditLog extends Model
 {
     use HasUlid;

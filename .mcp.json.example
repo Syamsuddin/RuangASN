@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "stitch": {
+      "type": "http",
+      "url": "https://stitch.googleapis.com/mcp",
+      "headers": {
+        "X-Goog-Api-Key": "GANTI_DENGAN_API_KEY_STITCH_ANDA"
+      }
+    }
+  }
+}

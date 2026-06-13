@@ -5,6 +5,24 @@ use App\Traits\HasUlid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string $id
+ * @property string $organization_id
+ * @property string $recipient_id
+ * @property string $notification_type
+ * @property string $title
+ * @property string $body
+ * @property array|null $data
+ * @property string|null $channel
+ * @property string|null $status
+ * @property \Illuminate\Support\Carbon|null $read_at
+ * @property \Illuminate\Support\Carbon|null $delivered_at
+ * @property string|null $failed_reason
+ * @property int|null $retry_count
+ * @property \Illuminate\Support\Carbon|null $scheduled_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ */
 class AppNotification extends Model
 {
     use HasUlid;

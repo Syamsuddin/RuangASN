@@ -14,6 +14,43 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
+/**
+ * @property string $id
+ * @property string|null $nip
+ * @property string|null $nip_lama
+ * @property string $name
+ * @property string $email
+ * @property string|null $phone
+ * @property \App\Enums\UserType $user_type
+ * @property \App\Enums\UserStatus $status
+ * @property \App\Enums\PresenceStatus $presence_status
+ * @property string|null $workspace_mode
+ * @property string|null $avatar_path
+ * @property string|null $bio
+ * @property string $password
+ * @property \Illuminate\Support\Carbon|null $email_verified_at
+ * @property bool $mfa_enabled
+ * @property string|null $mfa_secret
+ * @property \Illuminate\Support\Carbon|null $last_login_at
+ * @property string|null $last_login_ip
+ * @property int $failed_login_count
+ * @property \Illuminate\Support\Carbon|null $locked_until
+ * @property string|null $national_id
+ * @property \Illuminate\Support\Carbon|null $birth_date
+ * @property string|null $gender
+ * @property string|null $organization_id
+ * @property string|null $pemda_id
+ * @property array|null $notification_settings
+ * @property array|null $ai_preferences
+ * @property string|null $timezone
+ * @property string|null $locale
+ * @property string|null $created_by
+ * @property string|null $updated_by
+ * @property int $version
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ */
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, HasRoles, HasUlid, Notifiable, SoftDeletes;
@@ -85,9 +122,37 @@ class User extends Authenticatable
         return $this->hasMany(Task::class, 'assignee_id');
     }
 
+    public function teamMemberships(): HasMany
+    {
+        return $this->hasMany(TeamMember::class);
+    }
+
     public function mfaBackupCodes(): HasMany
     {
         return $this->hasMany(MfaBackupCode::class);
+    }
+
+    /** @return \Illuminate\Database\Eloquent\Relations\HasOne<NotificationPreference, self> */
+    public function notificationPreference(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(NotificationPreference::class);
+    }
+
+    public function prefs(): NotificationPreference
+    {
+        /** @var NotificationPreference|null $pref */
+        $pref = $this->notificationPreference;
+        return $pref ?? new NotificationPreference([
+            'in_app'            => true,
+            'email'             => false,
+            'push'              => false,
+            'task_assigned'     => true,
+            'task_due'          => true,
+            'meeting_invited'   => true,
+            'document_approval' => true,
+            'report_status'     => true,
+            'digest_frequency'  => 'realtime',
+        ]);
     }
 
     public function isLocked(): bool

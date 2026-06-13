@@ -7,6 +7,21 @@ use App\Traits\HasUlid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string $id
+ * @property string $task_id
+ * @property string|null $uploader_id
+ * @property \App\Enums\EvidenceType $evidence_type
+ * @property string $title
+ * @property string|null $description
+ * @property string|null $file_path
+ * @property string|null $file_name
+ * @property int|null $file_size
+ * @property string|null $mime_type
+ * @property string|null $url
+ * @property \App\Enums\DataClassification $data_classification
+ * @property \Illuminate\Support\Carbon|null $created_at
+ */
 class TaskEvidence extends Model
 {
     use HasUlid;

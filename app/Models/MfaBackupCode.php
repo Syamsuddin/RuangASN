@@ -5,6 +5,13 @@ use App\Traits\HasUlid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string $id
+ * @property string $user_id
+ * @property string $code_hash
+ * @property \Illuminate\Support\Carbon|null $used_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ */
 class MfaBackupCode extends Model
 {
     use HasUlid;

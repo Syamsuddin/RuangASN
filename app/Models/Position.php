@@ -6,6 +6,23 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property string $id
+ * @property string $organization_id
+ * @property string $name
+ * @property string|null $code
+ * @property string|null $echelon
+ * @property string|null $position_type
+ * @property string|null $grade_level
+ * @property bool $is_head
+ * @property bool $is_active
+ * @property \Illuminate\Support\Carbon|null $effective_start_date
+ * @property \Illuminate\Support\Carbon|null $effective_end_date
+ * @property string|null $created_by
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ */
 class Position extends Model
 {
     use HasUlid, SoftDeletes;

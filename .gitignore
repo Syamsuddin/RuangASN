@@ -30,4 +30,9 @@ Thumbs.db
 /CLAUDE.md
 # Config lokal Claude (berisi MCP secret / Stitch API key)
 /.claude/
+# Config MCP Claude Code (berisi Stitch API key) — pakai .mcp.json.example sbg template
+/.mcp.json
 # Kredensial & file berisi password DB sudah dicakup oleh .env* di atas
+
+# Tooling cache claude-flow (noise lokal)
+/.claude-flow/

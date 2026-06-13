@@ -95,7 +95,7 @@ class LoginController extends Controller
     public function logout(\Illuminate\Http\Request $request): JsonResponse
     {
         $user = $request->user();
-        $request->user()->currentAccessToken()?->delete();
+        $request->user()->currentAccessToken()->delete();
         $this->audit->log(AuditAction::LOGOUT, 'User', $user->id);
         return response()->json(['message' => 'Berhasil logout.']);
     }
@@ -140,6 +140,7 @@ class LoginController extends Controller
 
     private function verifyBackupCode(User $user, string $code): bool
     {
+        /** @var \App\Models\MfaBackupCode|null $backupCode */
         $backupCode = $user->mfaBackupCodes()
             ->whereNull('used_at')
             ->get()

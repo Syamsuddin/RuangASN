@@ -5,6 +5,16 @@ use App\Traits\HasUlid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string $id
+ * @property string $task_id
+ * @property string $title
+ * @property bool $is_done
+ * @property string|null $done_by
+ * @property \Illuminate\Support\Carbon|null $done_at
+ * @property int $sort_order
+ * @property \Illuminate\Support\Carbon|null $created_at
+ */
 class TaskChecklist extends Model
 {
     use HasUlid;

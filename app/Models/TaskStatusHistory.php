@@ -5,6 +5,15 @@ use App\Traits\HasUlid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string $id
+ * @property string $task_id
+ * @property string|null $from_status
+ * @property string|null $to_status
+ * @property string|null $changed_by
+ * @property string|null $reason
+ * @property \Illuminate\Support\Carbon|null $changed_at
+ */
 class TaskStatusHistory extends Model
 {
     use HasUlid;

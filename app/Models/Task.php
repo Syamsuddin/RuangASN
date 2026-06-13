@@ -8,7 +8,42 @@ use App\Enums\TaskType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property string $id
+ * @property string $organization_id
+ * @property string|null $pemda_id
+ * @property string|null $parent_task_id
+ * @property string|null $meeting_id
+ * @property string|null $project_id
+ * @property string|null $skp_indicator_id
+ * @property string $title
+ * @property string|null $description
+ * @property TaskType $task_type
+ * @property TaskStatus $status
+ * @property TaskPriority $priority
+ * @property string|null $creator_id
+ * @property string|null $assignee_id
+ * @property string|null $reviewer_id
+ * @property Carbon|null $due_date
+ * @property Carbon|null $started_at
+ * @property Carbon|null $completed_at
+ * @property bool $is_recurring
+ * @property array|null $recurring_pattern
+ * @property string|null $recurring_parent_id
+ * @property string|null $estimated_hours
+ * @property string|null $actual_hours
+ * @property array|null $tags
+ * @property DataClassification $data_classification
+ * @property string|null $created_by
+ * @property string|null $updated_by
+ * @property string|null $deleted_by
+ * @property int $version
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property Carbon|null $deleted_at
+ */
 class Task extends BaseModel
 {
     use HasFactory;

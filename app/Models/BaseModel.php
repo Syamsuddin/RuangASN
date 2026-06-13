@@ -6,6 +6,7 @@ use App\Traits\HasUlid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/** @phpstan-consistent-constructor */
 abstract class BaseModel extends Model
 {
     use BelongsToOrganization;

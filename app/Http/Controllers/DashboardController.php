@@ -31,13 +31,38 @@ class DashboardController extends Controller
 
         $recentTasks = (clone $taskQuery)
             ->with('assignee:id,name')
-            ->orderByDesc('created_at')
+            ->orderByDesc('updated_at')
             ->limit(10)
             ->get(['id', 'title', 'status', 'priority', 'due_date', 'assignee_id']);
 
+        // Today's meetings
+        $todayMeetings = \App\Models\Meeting::query()
+            ->where(fn ($q) => $q
+                ->where('host_id', $user->id)
+                ->orWhere('secretary_id', $user->id)
+                ->orWhereHas('participants', fn ($pq) => $pq->where('user_id', $user->id))
+            )
+            ->whereDate('scheduled_at', today())
+            ->whereNotIn('status', ['cancelled'])
+            ->orderBy('scheduled_at')
+            ->limit(5)
+            ->get(['id', 'title', 'scheduled_at', 'duration_minutes', 'meeting_mode', 'location', 'online_url', 'status'])
+            ->map(fn ($m) => [
+                'id'         => $m->id,
+                'title'      => $m->title,
+                'start_time' => $m->scheduled_at?->format('H:i'),
+                'end_time'   => $m->scheduled_at?->copy()->addMinutes($m->duration_minutes ?? 60)->format('H:i'),
+                'mode'       => $m->meeting_mode->value,
+                'location'   => $m->location,
+                'link'       => $m->online_url,
+                'status'     => $m->status->value,
+            ])
+            ->all();
+
         return Inertia::render('Dashboard', [
-            'taskStats'   => $taskStats,
-            'recentTasks' => $recentTasks,
+            'taskStats'     => $taskStats,
+            'recentTasks'   => $recentTasks,
+            'todayMeetings' => $todayMeetings,
         ]);
     }
 }
