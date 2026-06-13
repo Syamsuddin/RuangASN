@@ -4,8 +4,10 @@ namespace App\Services;
 
 use App\Enums\AttendanceStatus;
 use App\Enums\AuditAction;
+use App\Enums\CalendarType;
 use App\Enums\MeetingStatus;
 use App\Enums\TaskType;
+use App\Models\CalendarEvent;
 use App\Models\Meeting;
 use App\Models\MeetingActionItem;
 use App\Models\MeetingAgendaItem;
@@ -54,6 +56,7 @@ class MeetingService
         return DB::transaction(function () use ($meeting, $data) {
             $meeting->update($data);
             $this->outbox->publish('meeting.updated', $meeting->fresh()->toArray(), 'Meeting', $meeting->id);
+            $this->syncCalendarEvent($meeting->fresh());
             return $meeting->fresh();
         });
     }
@@ -78,6 +81,13 @@ class MeetingService
             }
 
             $meeting->update($updates);
+            $fresh = $meeting->fresh();
+
+            if ($new === MeetingStatus::SCHEDULED) {
+                $this->ensureCalendarEvent($fresh, $actor);
+            } elseif ($new === MeetingStatus::CANCELLED) {
+                $this->deleteCalendarEvent($fresh);
+            }
 
             $this->outbox->publish('meeting.status_changed', [
                 'meeting_id'      => $meeting->id,
@@ -94,8 +104,58 @@ class MeetingService
                 ['status' => $new->value]
             );
 
-            return $meeting->fresh();
+            return $fresh;
         });
+    }
+
+    /** Idempotent: create CalendarEvent if one doesn't exist for this meeting yet. */
+    public function ensureCalendarEvent(Meeting $meeting, User $host): CalendarEvent
+    {
+        $existing = CalendarEvent::where('meeting_id', $meeting->id)->first();
+        if ($existing) {
+            return $existing;
+        }
+
+        $endAt = $meeting->scheduled_at?->copy()->addMinutes($meeting->duration_minutes ?? 60);
+
+        return CalendarEvent::create([
+            'organization_id' => $meeting->organization_id,
+            'calendar_type'   => CalendarType::MEETING->value,
+            'owner_id'        => $meeting->host_id ?? $host->id,
+            'meeting_id'      => $meeting->id,
+            'title'           => $meeting->title,
+            'start_at'        => $meeting->scheduled_at,
+            'end_at'          => $endAt,
+            'location'        => $meeting->location,
+            'color'           => '#3B82F6',
+            'all_day'         => false,
+            'is_recurring'    => false,
+            'is_public'       => false,
+            'created_by'      => $meeting->host_id ?? $host->id,
+        ]);
+    }
+
+    /** Sync time/title changes to an existing linked CalendarEvent. */
+    private function syncCalendarEvent(Meeting $meeting): void
+    {
+        $event = CalendarEvent::where('meeting_id', $meeting->id)->first();
+        if (! $event || ! $meeting->scheduled_at) {
+            return;
+        }
+
+        $endAt = $meeting->scheduled_at->copy()->addMinutes($meeting->duration_minutes ?? 60);
+        $event->update([
+            'title'    => $meeting->title,
+            'start_at' => $meeting->scheduled_at,
+            'end_at'   => $endAt,
+            'location' => $meeting->location,
+        ]);
+    }
+
+    /** Soft-delete the linked CalendarEvent when a meeting is cancelled. */
+    private function deleteCalendarEvent(Meeting $meeting): void
+    {
+        CalendarEvent::where('meeting_id', $meeting->id)->get()->each->delete();
     }
 
     public function addParticipant(Meeting $meeting, array $data): MeetingParticipant

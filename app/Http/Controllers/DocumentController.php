@@ -2,22 +2,70 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\AuditAction;
 use App\Enums\DataClassification;
 use App\Enums\DocumentStatus;
 use App\Enums\DocumentType;
 use App\Models\Document;
 use App\Models\DocumentApproval;
+use App\Services\AuditService;
 use App\Services\DocumentService;
+use App\Services\WatermarkService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DocumentController extends Controller
 {
-    public function __construct(private DocumentService $documentService) {}
+    public function __construct(
+        private DocumentService $documentService,
+        private AuditService $auditService,
+        private WatermarkService $watermarkService,
+    ) {}
+
+    public function approvalQueue(Request $request): Response
+    {
+        $this->authorize('viewAny', Document::class);
+
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        if (! $user->hasPermissionTo('document.approve')) {
+            abort(403);
+        }
+
+        $queue = Document::with(['owner:id,name'])
+            ->whereHas('approvals', fn ($q) => $q
+                ->where('approver_id', $user->id)
+                ->where('status', 'pending')
+            )
+            ->where('status', DocumentStatus::IN_REVIEW->value)
+            ->orderByDesc('updated_at')
+            ->get()
+            ->map(function (Document $d) use ($user) {
+                /** @var DocumentApproval|null $myStep */
+                $myStep = $d->approvals
+                    ->where('approver_id', $user->id)
+                    ->where('status', 'pending')
+                    ->first();
+
+                return [
+                    ...$this->formatDocumentCard($d),
+                    'my_step'       => $myStep?->step_number,
+                    'submitted_at'  => $d->updated_at?->toISOString(),
+                ];
+            });
+
+        return Inertia::render('Documents/ApprovalQueue', [
+            'queue' => $queue,
+            'count' => $queue->count(),
+        ]);
+    }
 
     public function index(Request $request): Response
     {
@@ -48,11 +96,18 @@ class DocumentController extends Controller
             ->orderByDesc('updated_at')
             ->get();
 
+        $canApprove = $user->hasPermissionTo('document.approve');
+        $pendingApprovalCount = $canApprove
+            ? DocumentApproval::where('approver_id', $user->id)->where('status', 'pending')->count()
+            : 0;
+
         return Inertia::render('Documents/Index', [
-            'documents' => $query->map(fn ($d) => $this->formatDocumentCard($d)),
-            'filters'   => $request->only(['type', 'status', 'classification', 'search']),
-            'types'     => array_column(DocumentType::cases(), 'value'),
-            'statuses'  => array_column(DocumentStatus::cases(), 'value'),
+            'documents'            => $query->map(fn ($d) => $this->formatDocumentCard($d)),
+            'filters'              => $request->only(['type', 'status', 'classification', 'search']),
+            'types'                => array_column(DocumentType::cases(), 'value'),
+            'statuses'             => array_column(DocumentStatus::cases(), 'value'),
+            'canApprove'           => $canApprove,
+            'pendingApprovalCount' => $pendingApprovalCount,
         ]);
     }
 
@@ -69,17 +124,29 @@ class DocumentController extends Controller
             'task:id,title',
         ]);
 
+        /** @var \App\Models\User $user */
         $user = auth()->user();
 
+        $canDownload  = $user->can('download', $document);
+        $streamUrl    = null;
+        $downloadUrl  = null;
+
+        if ($document->file_path && $canDownload) {
+            $streamUrl   = URL::temporarySignedRoute('documents.stream', now()->addMinutes(5), ['document' => $document->id]);
+            $downloadUrl = URL::temporarySignedRoute('documents.download.signed', now()->addMinutes(5), ['document' => $document->id]);
+        }
+
         return Inertia::render('Documents/Show', [
-            'document' => $document,
-            'can'      => [
+            'document'     => $document,
+            'stream_url'   => $streamUrl,
+            'download_url' => $downloadUrl,
+            'can'          => [
                 'update'        => $user->can('update', $document),
                 'submit'        => $user->can('submit', $document),
                 'approve'       => $user->can('approve', $document),
                 'publish'       => $user->can('publish', $document),
                 'createVersion' => $user->can('create', Document::class) && $document->status === DocumentStatus::PUBLISHED,
-                'download'      => $user->can('download', $document),
+                'download'      => $canDownload,
             ],
         ]);
     }
@@ -229,6 +296,10 @@ class DocumentController extends Controller
             ->with('success', 'Dokumen berhasil dihapus.');
     }
 
+    /**
+     * Download with policy check, audit log, and image watermark for L3/L4.
+     * Accessed via the signed route `documents.download.signed` (TTL 5 min).
+     */
     public function download(Document $document)
     {
         $this->authorize('download', $document);
@@ -243,9 +314,95 @@ class DocumentController extends Controller
             abort(404, 'File tidak ditemukan di storage.');
         }
 
-        $this->documentService->update($document, [], null); // bump audit
+        // Always audit the download
+        $this->auditService->log(
+            AuditAction::DOWNLOADED,
+            'Document',
+            $document->id,
+            [],
+            ['classification' => $document->data_classification->value],
+        );
 
-        return Storage::disk($disk)->download($document->file_path, $document->file_name ?? 'document');
+        $mime     = $document->mime_type ?? 'application/octet-stream';
+        $fileName = $document->file_name ?? 'document';
+        $level    = $document->data_classification->value;
+
+        // Image watermark for CONFIDENTIAL (3) and RESTRICTED (4)
+        if ($level >= DataClassification::CONFIDENTIAL->value && $this->isImageMime($mime)) {
+            return $this->streamWatermarkedImage($disk, $document, $mime, $fileName, false);
+        }
+
+        // NOTE: Server-side PDF watermark stamping requires setasign/fpdi (Phase 2 deferral).
+        // The in-app viewer (Feature 3) provides visual watermark overlay for PDFs.
+
+        return Storage::disk($disk)->download($document->file_path, $fileName);
+    }
+
+    /**
+     * Inline stream for the in-app PDF/image viewer (Content-Disposition: inline).
+     * Accessed via the signed route `documents.stream` (TTL 5 min, middleware signed).
+     */
+    public function stream(Document $document)
+    {
+        $this->authorize('download', $document);
+
+        if (! $document->file_path) {
+            abort(404, 'File tidak tersedia.');
+        }
+
+        $disk = config('filesystems.evidence_disk', 'local');
+
+        if (! Storage::disk($disk)->exists($document->file_path)) {
+            abort(404, 'File tidak ditemukan di storage.');
+        }
+
+        $mime     = $document->mime_type ?? 'application/octet-stream';
+        $fileName = $document->file_name ?? 'document';
+        $level    = $document->data_classification->value;
+
+        // Watermark images inline too for CONFIDENTIAL/RESTRICTED
+        if ($level >= DataClassification::CONFIDENTIAL->value && $this->isImageMime($mime)) {
+            return $this->streamWatermarkedImage($disk, $document, $mime, $fileName, true);
+        }
+
+        // Stream inline (PDF viewer, etc.)
+        $content = Storage::disk($disk)->get($document->file_path);
+
+        return response($content, 200, [
+            'Content-Type'        => $mime,
+            'Content-Disposition' => 'inline; filename="' . $fileName . '"',
+        ]);
+    }
+
+    private function isImageMime(string $mime): bool
+    {
+        return in_array($mime, ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'], true)
+            || str_starts_with($mime, 'image/');
+    }
+
+    private function streamWatermarkedImage(
+        string $disk,
+        Document $document,
+        string $mime,
+        string $fileName,
+        bool $inline
+    ): HttpResponse {
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+        $text = $this->watermarkService->buildWatermarkText(
+            $user->name,
+            $user->nip ?? '—',
+            now()->setTimezone('Asia/Jakarta')->format('d/m/Y H:i')
+        );
+
+        $raw        = Storage::disk($disk)->get($document->file_path) ?? '';
+        $watermarked = $this->watermarkService->stampImage($raw, $text, $mime);
+        $disposition = $inline ? 'inline' : 'attachment';
+
+        return response($watermarked, 200, [
+            'Content-Type'        => $mime,
+            'Content-Disposition' => "{$disposition}; filename=\"{$fileName}\"",
+        ]);
     }
 
     private function formatDocumentCard(Document $d): array

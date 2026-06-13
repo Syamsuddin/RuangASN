@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { Link, useForm, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import RichTextEditor from '@/components/RichTextEditor.vue';
 import {
     ArrowLeft, BarChart2, CheckCircle2, XCircle, Clock,
     User, Building2, AlertCircle, Sparkles, Send,
@@ -311,19 +312,19 @@ const saveContent = () => {
                                     style="color: #3B82F6; background: rgba(59,130,246,0.1);"
                                 >Edit</button>
                             </div>
-                            <p
+                            <!-- Render HTML from rich text editor -->
+                            <div
                                 v-if="report.content"
-                                class="text-sm leading-relaxed whitespace-pre-wrap"
+                                class="prose-rte text-sm leading-relaxed"
                                 style="color: var(--text-secondary);"
-                            >{{ report.content }}</p>
+                                v-html="report.content"
+                            />
                             <p v-else class="text-sm italic" style="color: var(--text-muted);">Belum ada konten.</p>
                         </div>
                         <div v-else>
-                            <textarea
+                            <RichTextEditor
                                 v-model="editForm.content"
-                                rows="12"
-                                class="w-full px-3 py-2 rounded-lg text-sm border outline-none resize-none"
-                                style="background: var(--bg-tertiary); border-color: var(--border-color); color: var(--text-primary);"
+                                placeholder="Tulis isi laporan di sini..."
                             />
                             <div class="flex gap-2 mt-3">
                                 <button

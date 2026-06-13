@@ -11,8 +11,13 @@ use App\Models\MeetingMinute;
 use App\Models\MeetingParticipant;
 use App\Models\User;
 use App\Services\MeetingService;
+use BaconQrCode\Renderer\Image\SvgImageBackEnd;
+use BaconQrCode\Renderer\ImageRenderer;
+use BaconQrCode\Renderer\RendererStyle\RendererStyle;
+use BaconQrCode\Writer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -270,6 +275,59 @@ class MeetingController extends Controller
         $this->meetingService->approveMinutes($minutes, $request->user());
 
         return back()->with('success', 'Notulensi berhasil disetujui.');
+    }
+
+    /** GET /meetings/{meeting}/checkin-qr — host only: show QR for participant self check-in */
+    public function checkInQr(Meeting $meeting): Response
+    {
+        $this->authorize('update', $meeting);
+
+        $signedUrl = URL::temporarySignedRoute(
+            'meetings.checkin',
+            now()->addHours(4),
+            ['meeting' => $meeting->id]
+        );
+
+        $renderer = new ImageRenderer(
+            new RendererStyle(300),
+            new SvgImageBackEnd()
+        );
+        $writer = new Writer($renderer);
+        $qrSvg  = $writer->writeString($signedUrl);
+
+        return Inertia::render('Meetings/CheckInQr', [
+            'meeting'    => $meeting->only('id', 'title', 'scheduled_at', 'location'),
+            'qrSvg'      => $qrSvg,
+            'signedUrl'  => $signedUrl,
+        ]);
+    }
+
+    /** GET /meetings/{meeting}/checkin — signed URL; participant self check-in */
+    public function checkIn(Request $request, Meeting $meeting): Response|RedirectResponse
+    {
+        $user = $request->user();
+
+        /** @var MeetingParticipant|null $participant */
+        $participant = $meeting->participants()->where('user_id', $user->id)->first();
+
+        if (! $participant) {
+            abort(403, 'Anda bukan peserta meeting ini.');
+        }
+
+        $gracePeriodMinutes = 15;
+        $isLate = $meeting->scheduled_at && now()->gt(
+            $meeting->scheduled_at->copy()->addMinutes($gracePeriodMinutes)
+        );
+
+        $newStatus = $isLate ? AttendanceStatus::LATE : AttendanceStatus::PRESENT;
+        $this->meetingService->recordAttendance($participant, $newStatus);
+
+        return Inertia::render('Meetings/CheckInResult', [
+            'meeting'    => $meeting->only('id', 'title', 'scheduled_at'),
+            'status'     => $newStatus->value,
+            'statusLabel'=> $isLate ? 'Terlambat' : 'Hadir',
+            'checkInAt'  => now()->toISOString(),
+        ]);
     }
 
     private function formatMeetingCard(Meeting $m): array

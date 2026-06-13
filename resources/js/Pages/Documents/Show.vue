@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Link, useForm, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import {
@@ -62,6 +62,8 @@ interface Document {
 
 interface Props {
     document: Document;
+    stream_url?: string;
+    download_url?: string;
     can: {
         update: boolean;
         submit: boolean;
@@ -211,6 +213,19 @@ const currentUserId = () => {
     // We rely on server-side can.approve; checking approvals for pending step
     return props.document.approvals?.find(a => a.status === 'pending');
 };
+
+// Viewer helpers
+const showWatermarkOverlay = computed(() =>
+    props.document.data_classification >= 3
+);
+
+const fileViewerType = computed(() => {
+    const mime = props.document.mime_type ?? '';
+    if (!props.document.file_name) return 'none';
+    if (mime.includes('pdf')) return 'pdf';
+    if (mime.startsWith('image/')) return 'image';
+    return 'other';
+});
 </script>
 
 <template>
@@ -231,10 +246,10 @@ const currentUserId = () => {
                         <ArrowLeft :size="16" /> Kembali ke Dokumen
                     </Link>
                     <div class="flex items-center gap-2 flex-wrap">
-                        <!-- Download -->
+                        <!-- Download (signed URL generated server-side) -->
                         <a
-                            v-if="can.download && document.file_name"
-                            :href="`/documents/${document.id}/download`"
+                            v-if="can.download && document.file_name && download_url"
+                            :href="download_url"
                             class="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-white hover:opacity-90"
                             style="background: #8B5CF6;"
                         >
@@ -403,7 +418,7 @@ const currentUserId = () => {
                                 style="background: var(--bg-tertiary); color: var(--text-secondary);"
                             >{{ document.description }}</div>
 
-                            <!-- File metadata -->
+                            <!-- File metadata row -->
                             <div v-if="document.file_name" class="rounded-lg p-4 mb-4" style="background: var(--bg-tertiary);">
                                 <div class="flex items-center justify-between gap-4">
                                     <div class="flex items-center gap-3">
@@ -419,11 +434,98 @@ const currentUserId = () => {
                                         </div>
                                     </div>
                                     <a
-                                        v-if="can.download"
-                                        :href="`/documents/${document.id}/download`"
+                                        v-if="can.download && download_url"
+                                        :href="download_url"
                                         class="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-white"
                                         style="background: #8B5CF6;"
                                     ><Download :size="13" /> Unduh</a>
+                                </div>
+                            </div>
+
+                            <!-- In-app viewer -->
+                            <div v-if="can.download && stream_url && fileViewerType !== 'none'" class="mb-4">
+                                <!-- Watermark notice for CONFIDENTIAL / RESTRICTED -->
+                                <div
+                                    v-if="showWatermarkOverlay"
+                                    class="flex items-center gap-2 px-3 py-2 rounded-lg mb-2 text-xs font-medium"
+                                    style="background: rgba(245,158,11,0.12); color: #F59E0B; border: 1px solid rgba(245,158,11,0.25);"
+                                >
+                                    <AlertCircle :size="13" />
+                                    Dokumen ini bersifat rahasia. Watermark identitas Anda ditampilkan dalam pratinjau.
+                                </div>
+
+                                <!-- PDF viewer -->
+                                <div v-if="fileViewerType === 'pdf'" class="relative rounded-lg overflow-hidden" style="height: 600px;">
+                                    <iframe
+                                        :src="stream_url"
+                                        class="w-full h-full border-0"
+                                        title="Pratinjau Dokumen"
+                                    />
+                                    <!-- Watermark overlay for CONFIDENTIAL/RESTRICTED -->
+                                    <div
+                                        v-if="showWatermarkOverlay"
+                                        class="absolute inset-0 pointer-events-none overflow-hidden select-none"
+                                        aria-hidden="true"
+                                    >
+                                        <!-- Diagonal watermark pattern using CSS -->
+                                        <div
+                                            class="absolute inset-0 flex items-center justify-center"
+                                            style="transform: rotate(-35deg); opacity: 0.12;"
+                                        >
+                                            <div class="grid gap-16 text-center" style="grid-template-rows: repeat(8, 1fr);">
+                                                <div
+                                                    v-for="n in 8"
+                                                    :key="n"
+                                                    class="text-xs font-bold tracking-widest uppercase whitespace-nowrap"
+                                                    style="color: #EF4444; font-size: 13px; letter-spacing: 0.2em;"
+                                                >RAHASIA &bull; {{ document.owner?.name ?? '' }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Image viewer -->
+                                <div v-else-if="fileViewerType === 'image'" class="relative rounded-lg overflow-hidden">
+                                    <img
+                                        :src="stream_url"
+                                        :alt="document.file_name"
+                                        class="w-full object-contain rounded-lg"
+                                        style="max-height: 600px; background: var(--bg-tertiary);"
+                                    />
+                                    <!-- Watermark overlay -->
+                                    <div
+                                        v-if="showWatermarkOverlay"
+                                        class="absolute inset-0 pointer-events-none overflow-hidden select-none"
+                                        aria-hidden="true"
+                                    >
+                                        <div
+                                            class="absolute inset-0 flex items-center justify-center"
+                                            style="transform: rotate(-35deg); opacity: 0.15;"
+                                        >
+                                            <div class="grid gap-12 text-center" style="grid-template-rows: repeat(6, 1fr);">
+                                                <div
+                                                    v-for="n in 6"
+                                                    :key="n"
+                                                    class="text-xs font-bold tracking-widest uppercase whitespace-nowrap"
+                                                    style="color: #EF4444; font-size: 14px; letter-spacing: 0.2em;"
+                                                >RAHASIA &bull; {{ document.owner?.name ?? '' }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Unsupported type -->
+                                <div v-else class="rounded-lg p-6 text-center" style="background: var(--bg-tertiary);">
+                                    <FileText :size="32" class="mx-auto mb-2" style="color: var(--text-muted);" />
+                                    <p class="text-sm mb-3" style="color: var(--text-secondary);">
+                                        Pratinjau tidak tersedia untuk tipe berkas ini.
+                                    </p>
+                                    <a
+                                        v-if="download_url"
+                                        :href="download_url"
+                                        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-white"
+                                        style="background: #8B5CF6;"
+                                    ><Download :size="14" /> Unduh Berkas</a>
                                 </div>
                             </div>
 

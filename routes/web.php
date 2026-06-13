@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\KnowledgeController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\DocumentController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\TaskController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -75,6 +77,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/{meeting}/action-items',                             [MeetingController::class, 'addActionItem'])->name('action_items.store');
         Route::post('/{meeting}/minutes',                                  [MeetingController::class, 'upsertMinutes'])->name('minutes.upsert');
         Route::post('/minutes/{minutes}/approve',                          [MeetingController::class, 'approveMinutes'])->name('minutes.approve');
+        Route::get('/{meeting}/checkin-qr',                               [MeetingController::class, 'checkInQr'])->name('checkin_qr');
+        Route::get('/{meeting}/checkin',                                  [MeetingController::class, 'checkIn'])->name('checkin')->middleware('signed');
     });
 
     // ── Calendar (Inertia web) ──
@@ -90,16 +94,22 @@ Route::middleware('auth')->group(function () {
     Route::prefix('documents')->name('documents.')->group(function () {
         Route::get('/',                                              [DocumentController::class, 'index'])->name('index');
         Route::post('/',                                             [DocumentController::class, 'store'])->name('store');
+        // Approval queue — must be before /{document} wildcard
+        Route::get('/approval-queue',                                [DocumentController::class, 'approvalQueue'])->name('approval_queue');
+        Route::post('/approvals/{approval}/approve',                 [DocumentController::class, 'approve'])->name('approvals.approve');
+        Route::post('/approvals/{approval}/reject',                  [DocumentController::class, 'reject'])->name('approvals.reject');
         Route::get('/{document}',                                    [DocumentController::class, 'show'])->name('show');
         Route::get('/{document}/download',                           [DocumentController::class, 'download'])->name('download');
+        // Signed download (short TTL, redirected from show)
+        Route::get('/{document}/download/signed',                    [DocumentController::class, 'download'])->name('download.signed')->middleware('signed');
+        // Signed inline stream for in-app viewer
+        Route::get('/{document}/stream',                             [DocumentController::class, 'stream'])->name('stream')->middleware('signed');
         Route::patch('/{document}',                                  [DocumentController::class, 'update'])->name('update');
         Route::delete('/{document}',                                 [DocumentController::class, 'destroy'])->name('destroy');
         Route::post('/{document}/submit',                            [DocumentController::class, 'submit'])->name('submit');
         Route::post('/{document}/publish',                           [DocumentController::class, 'publish'])->name('publish');
         Route::post('/{document}/archive',                           [DocumentController::class, 'archive'])->name('archive');
         Route::post('/{document}/versions',                          [DocumentController::class, 'createVersion'])->name('versions.store');
-        Route::post('/approvals/{approval}/approve',                 [DocumentController::class, 'approve'])->name('approvals.approve');
-        Route::post('/approvals/{approval}/reject',                  [DocumentController::class, 'reject'])->name('approvals.reject');
     });
 
     // ── Report (Inertia web) ──
@@ -113,6 +123,24 @@ Route::middleware('auth')->group(function () {
         Route::post('/{report}/transition',    [ReportController::class, 'transition'])->name('transition');
         Route::post('/{report}/publish',       [ReportController::class, 'publish'])->name('publish');
         Route::post('/{report}/ai-draft',      [ReportController::class, 'generateAiDraft'])->name('ai_draft');
+    });
+
+    // ── Knowledge Base (Inertia web) ──
+    Route::prefix('knowledge')->name('knowledge.')->group(function () {
+        Route::get('/', [KnowledgeController::class, 'index'])->name('index');
+        Route::get('/create', [KnowledgeController::class, 'create'])->name('create');
+        Route::post('/', [KnowledgeController::class, 'store'])->name('store');
+        Route::post('/categories', [KnowledgeController::class, 'storeCategory'])->name('categories.store');
+        Route::patch('/categories/{category}', [KnowledgeController::class, 'updateCategory'])->name('categories.update');
+        Route::get('/{article}', [KnowledgeController::class, 'show'])->name('show');
+        Route::get('/{article}/edit', [KnowledgeController::class, 'edit'])->name('edit');
+        Route::patch('/{article}', [KnowledgeController::class, 'update'])->name('update');
+        Route::delete('/{article}', [KnowledgeController::class, 'destroy'])->name('destroy');
+        Route::post('/{article}/transition', [KnowledgeController::class, 'transition'])->name('transition');
+        Route::post('/{article}/publish', [KnowledgeController::class, 'publish'])->name('publish');
+        Route::post('/{article}/archive', [KnowledgeController::class, 'archive'])->name('archive');
+        Route::post('/{article}/versions', [KnowledgeController::class, 'createVersion'])->name('versions.store');
+        Route::post('/{article}/helpful', [KnowledgeController::class, 'markHelpful'])->name('helpful');
     });
 
     // ── Admin ──
@@ -140,6 +168,10 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/audit', [Admin\AuditController::class, 'index'])->name('audit.index');
     });
+
+    // ── Search ──
+    Route::get('/search', [SearchController::class, 'index'])->name('search.index');
+    Route::get('/search/quick', [SearchController::class, 'quick'])->name('search.quick');
 
     // ── Notifications (Inertia web) ──
     Route::prefix('notifications')->name('notifications.')->group(function () {

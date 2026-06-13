@@ -11,6 +11,10 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 
 /**
+ * @property-read CalendarEvent|null $calendarEvent
+ */
+
+/**
  * @property string $id
  * @property string $organization_id
  * @property string|null $pemda_id
@@ -76,6 +80,7 @@ class Meeting extends BaseModel
     public function decisions(): HasMany { return $this->hasMany(MeetingDecision::class); }
     public function actionItems(): HasMany { return $this->hasMany(MeetingActionItem::class); }
     public function minutes(): HasOne { return $this->hasOne(MeetingMinute::class); }
+    public function calendarEvent(): HasOne { return $this->hasOne(CalendarEvent::class); }
 
     public function canTransitionTo(MeetingStatus $new, User $user): bool
     {

@@ -2,10 +2,11 @@
 import { ref, computed } from 'vue';
 import { Link, useForm, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import RichTextEditor from '@/components/RichTextEditor.vue';
 import {
     ArrowLeft, Clock, Video, MapPin, Users, Building2,
     Monitor, Plus, CheckCircle2, Circle, ChevronRight,
-    FileText, ListChecks, UserCheck, Gavel, Zap, ScrollText,
+    FileText, ListChecks, UserCheck, Gavel, Zap, ScrollText, QrCode,
 } from 'lucide-vue-next';
 
 interface Participant {
@@ -411,6 +412,20 @@ const recordAttendance = (participantId: string, status: string) => {
 
                         <!-- Participants -->
                         <div v-else-if="activeTab === 'participants'">
+                            <!-- QR button: host only, meeting scheduled/confirmed/in_progress -->
+                            <div
+                                v-if="can.update && ['scheduled','confirmed','in_progress'].includes(meeting.status)"
+                                class="flex justify-end mb-3"
+                            >
+                                <Link
+                                    :href="`/meetings/${meeting.id}/checkin-qr`"
+                                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white hover:opacity-90"
+                                    style="background: #3B82F6;"
+                                >
+                                    <QrCode :size="13" /> Tampilkan QR Absensi
+                                </Link>
+                            </div>
+
                             <div class="space-y-2">
                                 <div
                                     v-for="p in meeting.participants"
@@ -426,13 +441,18 @@ const recordAttendance = (participantId: string, status: string) => {
                                         <p class="text-sm font-medium" style="color: var(--text-primary);">{{ p.name ?? 'Unknown' }}</p>
                                         <p class="text-xs capitalize" style="color: var(--text-muted);">{{ p.role }}</p>
                                     </div>
-                                    <!-- Attendance status dot + label -->
-                                    <div class="flex items-center gap-1.5">
-                                        <div
-                                            class="w-2.5 h-2.5 rounded-full"
-                                            :style="`background: ${attendanceDot(p.attendance_status).dot};`"
-                                        ></div>
-                                        <span class="text-xs" style="color: var(--text-muted);">{{ attendanceDot(p.attendance_status).label }}</span>
+                                    <!-- Attendance status dot + label + check_in_at -->
+                                    <div class="flex flex-col items-end gap-0.5">
+                                        <div class="flex items-center gap-1.5">
+                                            <div
+                                                class="w-2.5 h-2.5 rounded-full"
+                                                :style="`background: ${attendanceDot(p.attendance_status).dot};`"
+                                            ></div>
+                                            <span class="text-xs" style="color: var(--text-muted);">{{ attendanceDot(p.attendance_status).label }}</span>
+                                        </div>
+                                        <span v-if="p.check_in_at" class="text-[10px]" style="color: var(--text-muted);">
+                                            {{ formatTime(p.check_in_at) }}
+                                        </span>
                                     </div>
                                     <!-- Record attendance (if can) -->
                                     <div v-if="can.update && meeting.status === 'in_progress'" class="shrink-0">
@@ -568,12 +588,9 @@ const recordAttendance = (participantId: string, status: string) => {
 
                             <!-- Content editor (if can record) -->
                             <div v-if="can.recordMinutes" class="space-y-3 mb-4">
-                                <textarea
+                                <RichTextEditor
                                     v-model="minutesForm.content"
-                                    rows="10"
                                     placeholder="Tulis notulensi rapat di sini..."
-                                    class="w-full px-3 py-2 rounded-lg text-sm border outline-none resize-y"
-                                    style="background: var(--bg-tertiary); border-color: var(--border-color); color: var(--text-primary);"
                                 />
                                 <div class="flex gap-2">
                                     <button @click="submitMinutes" :disabled="minutesForm.processing" class="px-4 py-2 rounded-lg text-sm font-semibold text-white" style="background: #3B82F6;">
@@ -588,12 +605,13 @@ const recordAttendance = (participantId: string, status: string) => {
                                 </div>
                             </div>
 
-                            <!-- Read-only content -->
+                            <!-- Read-only content (HTML from rich text) -->
                             <div
                                 v-else-if="meeting.minutes?.content"
-                                class="rounded-lg p-4 text-sm leading-relaxed whitespace-pre-wrap"
+                                class="prose-rte rounded-lg p-4 text-sm leading-relaxed"
                                 style="background: var(--bg-tertiary); color: var(--text-secondary);"
-                            >{{ meeting.minutes.content }}</div>
+                                v-html="meeting.minutes.content"
+                            />
 
                             <!-- Approve only -->
                             <div v-if="!can.recordMinutes && can.approveMinutes && meeting.minutes && meeting.minutes.status !== 'approved'" class="mt-3">

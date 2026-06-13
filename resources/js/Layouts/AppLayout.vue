@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
 import { useTheme } from '@/composables/useTheme';
 import { useNotifications } from '@/composables/useNotifications';
+import CommandPalette from '@/components/CommandPalette.vue';
 import {
     LayoutDashboard, BriefcaseBusiness, CheckSquare, Calendar,
     Users, Video, FolderOpen, FileText, BarChart3, MessageSquare,
@@ -21,8 +22,19 @@ const collapsed = ref(false);
 
 const { notifications, unreadCount, markRead, markAllRead, startEchoListener } = useNotifications();
 
-const bellOpen     = ref(false);
-const profileOpen  = ref(false);
+const bellOpen      = ref(false);
+const profileOpen   = ref(false);
+const paletteOpen   = ref(false);
+
+const openPalette = () => { paletteOpen.value = true; };
+const closePalette = () => { paletteOpen.value = false; };
+
+const handleGlobalKey = (e: KeyboardEvent) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        paletteOpen.value = !paletteOpen.value;
+    }
+};
 
 const toggleBell = () => {
     bellOpen.value = !bellOpen.value;
@@ -68,6 +80,7 @@ const handleNotifClick = (notif: any) => {
 
 onMounted(() => {
     document.addEventListener('click', closeDropdowns);
+    document.addEventListener('keydown', handleGlobalKey);
     if (user.value?.id) {
         startEchoListener(user.value.id);
     }
@@ -75,6 +88,7 @@ onMounted(() => {
 
 onUnmounted(() => {
     document.removeEventListener('click', closeDropdowns);
+    document.removeEventListener('keydown', handleGlobalKey);
 });
 
 const navGroups = [
@@ -276,6 +290,7 @@ const initials = computed(() => {
 
                 <!-- Search -->
                 <button
+                    @click="openPalette"
                     class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full text-sm transition-colors"
                     style="background: var(--bg-tertiary); color: var(--text-muted); border: 1px solid var(--border-color);"
                 >
@@ -447,4 +462,7 @@ const initials = computed(() => {
             </main>
         </div>
     </div>
+
+    <!-- Command Palette -->
+    <CommandPalette :open="paletteOpen" @close="closePalette" />
 </template>

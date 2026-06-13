@@ -47,6 +47,11 @@ class RbacSeeder extends Seeder
             'audit.view.own', 'audit.view.all',
             // Profile
             'profile.view.own', 'profile.edit.own', 'profile.mfa.manage',
+            // Knowledge
+            'knowledge.view.internal', 'knowledge.create', 'knowledge.edit.own',
+            'knowledge.publish', 'knowledge.archive',
+            // Search
+            'search.search', 'search.advanced',
         ];
 
         foreach ($permissions as $perm) {
@@ -81,6 +86,9 @@ class RbacSeeder extends Seeder
             'notification.view.own', 'notification.manage.own',
             'audit.view.own', 'audit.view.all',
             'profile.view.own', 'profile.edit.own', 'profile.mfa.manage',
+            'knowledge.view.internal', 'knowledge.create', 'knowledge.edit.own',
+            'knowledge.publish', 'knowledge.archive',
+            'search.search', 'search.advanced',
         ]);
 
         $kepalaOpd = Role::firstOrCreate(['name' => 'kepala_opd', 'guard_name' => 'web']);
@@ -103,6 +111,9 @@ class RbacSeeder extends Seeder
             'notification.view.own', 'notification.manage.own',
             'audit.view.own',
             'profile.view.own', 'profile.edit.own', 'profile.mfa.manage',
+            'knowledge.view.internal', 'knowledge.create', 'knowledge.edit.own',
+            'knowledge.publish', 'knowledge.archive',
+            'search.search', 'search.advanced',
         ]);
 
         $kepalaBidang = Role::firstOrCreate(['name' => 'kepala_bidang', 'guard_name' => 'web']);
@@ -124,6 +135,9 @@ class RbacSeeder extends Seeder
             'notification.view.own', 'notification.manage.own',
             'audit.view.own',
             'profile.view.own', 'profile.edit.own', 'profile.mfa.manage',
+            'knowledge.view.internal', 'knowledge.create', 'knowledge.edit.own',
+            'knowledge.publish', 'knowledge.archive',
+            'search.search', 'search.advanced',
         ]);
 
         $asn = Role::firstOrCreate(['name' => 'asn', 'guard_name' => 'web']);
@@ -140,6 +154,8 @@ class RbacSeeder extends Seeder
             'report.view.own', 'report.view.team', 'report.create', 'report.submit',
             'notification.view.own', 'notification.manage.own',
             'profile.view.own', 'profile.edit.own', 'profile.mfa.manage',
+            'knowledge.view.internal', 'knowledge.create', 'knowledge.edit.own',
+            'search.search', 'search.advanced',
         ]);
     }
 }

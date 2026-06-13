@@ -19,6 +19,10 @@
     },
     "dependencies": {
         "@inertiajs/vue3": "^3.4.0",
+        "@tiptap/extension-link": "^3.26.1",
+        "@tiptap/extension-placeholder": "^3.26.1",
+        "@tiptap/starter-kit": "^3.26.1",
+        "@tiptap/vue-3": "^3.26.1",
         "@vitejs/plugin-vue": "^6.0.7",
         "@vueuse/core": "^14.3.0",
         "class-variance-authority": "^0.7.1",

@@ -73,3 +73,41 @@ body {
 
 /* ── Focus ring ── */
 :focus-visible { outline: 2px solid #3B82F6; outline-offset: 2px; }
+
+/* ── Prose RTE — rich-text rendered content (dual mode) ── */
+.prose-rte { line-height: 1.7; color: var(--text-primary); }
+.prose-rte h1 { font-size: 1.5rem; font-weight: 700; margin: 1rem 0 0.5rem; color: var(--text-primary); }
+.prose-rte h2 { font-size: 1.25rem; font-weight: 700; margin: 1rem 0 0.5rem; color: var(--text-primary); }
+.prose-rte h3 { font-size: 1.1rem; font-weight: 600; margin: 0.75rem 0 0.4rem; color: var(--text-primary); }
+.prose-rte p  { margin: 0.5rem 0; }
+.prose-rte ul { list-style: disc; padding-left: 1.5rem; margin: 0.5rem 0; }
+.prose-rte ol { list-style: decimal; padding-left: 1.5rem; margin: 0.5rem 0; }
+.prose-rte li { margin: 0.25rem 0; }
+.prose-rte blockquote {
+    border-left: 3px solid #3B82F6;
+    padding-left: 1rem;
+    margin: 0.75rem 0;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+.prose-rte code {
+    background: var(--bg-tertiary);
+    color: #8B5CF6;
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+    font-size: 0.875em;
+    font-family: ui-monospace, monospace;
+}
+.prose-rte pre {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    overflow-x: auto;
+    margin: 0.75rem 0;
+}
+.prose-rte pre code { background: none; padding: 0; color: var(--text-primary); }
+.prose-rte a { color: #3B82F6; text-decoration: underline; }
+.prose-rte a:hover { opacity: 0.8; }
+.prose-rte strong { font-weight: 700; }
+.prose-rte em { font-style: italic; }

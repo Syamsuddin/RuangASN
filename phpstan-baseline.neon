@@ -425,3 +425,51 @@ parameters:
 			identifier: return.type
 			count: 1
 			path: app/Models/User.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Http/Resources/KnowledgeArticleResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Resources/KnowledgeArticleResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$slug\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/KnowledgeArticleResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$version_number\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/KnowledgeArticleResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/KnowledgeArticleResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$is_latest\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/KnowledgeArticleResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/KnowledgeArticleResource.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Resources/KnowledgeArticleResource.php

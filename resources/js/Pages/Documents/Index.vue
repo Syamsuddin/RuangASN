@@ -5,7 +5,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import {
     Plus, FileText, File, Search, X, Grid, List,
     FileSpreadsheet, FileImage, ChevronRight, FolderOpen,
-    Upload,
+    Upload, ClipboardCheck,
 } from 'lucide-vue-next';
 
 interface DocumentCard {
@@ -29,6 +29,8 @@ interface Props {
     filters: { type?: string; status?: string; classification?: string; search?: string };
     types: string[];
     statuses: string[];
+    pendingApprovalCount?: number;
+    canApprove?: boolean;
 }
 
 const props = defineProps<Props>();
@@ -184,14 +186,31 @@ const classificationOptions = [
                     <h1 class="text-xl font-bold" style="color: var(--text-primary);">Dokumen</h1>
                     <p class="text-sm mt-0.5" style="color: var(--text-muted);">{{ documents.length }} dokumen</p>
                 </div>
-                <button
-                    @click="showCreateSlide = true"
-                    class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90"
-                    style="background: #3B82F6;"
-                >
-                    <Plus :size="16" />
-                    Upload Dokumen
-                </button>
+                <div class="flex items-center gap-2">
+                    <!-- Approval queue badge (visible when user can approve) -->
+                    <Link
+                        v-if="canApprove"
+                        href="/documents/approval-queue"
+                        class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-opacity hover:opacity-90"
+                        style="background: rgba(245,158,11,0.15); color: #F59E0B; border: 1px solid rgba(245,158,11,0.3);"
+                    >
+                        <ClipboardCheck :size="16" />
+                        Antrean Persetujuan
+                        <span
+                            v-if="pendingApprovalCount && pendingApprovalCount > 0"
+                            class="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold text-white"
+                            style="background: #F59E0B;"
+                        >{{ pendingApprovalCount }}</span>
+                    </Link>
+                    <button
+                        @click="showCreateSlide = true"
+                        class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90"
+                        style="background: #3B82F6;"
+                    >
+                        <Plus :size="16" />
+                        Upload Dokumen
+                    </button>
+                </div>
             </div>
 
             <!-- Filter bar -->

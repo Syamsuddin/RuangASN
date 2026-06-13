@@ -74,7 +74,7 @@ class CalendarService
         $endIso   = $end->toISOString();
 
         $events   = $this->fetchCalendarEvents($user, $startIso, $endIso);
-        $meetings = $this->fetchMeetingEvents($user, $start, $end);
+        $meetings = $this->fetchMeetingEvents($user, $start, $end, $events);
         $tasks    = $this->fetchTaskEvents($user, $start, $end);
 
         return array_merge($events, $meetings, $tasks);
@@ -97,14 +97,25 @@ class CalendarService
                 'end'           => $e->end_at->toISOString(),
                 'all_day'       => $e->all_day,
                 'color'         => $e->color ?? '#8B5CF6',
-                'url'           => null,
+                'url'           => $e->meeting_id ? '/meetings/' . $e->meeting_id : null,
+                'meeting_id'    => $e->meeting_id,
             ])
             ->values()
             ->all();
     }
 
-    private function fetchMeetingEvents(User $user, Carbon $start, Carbon $end): array
+    /**
+     * Fetch meeting-based virtual events, excluding meetings that already have
+     * a real CalendarEvent row (to avoid duplication in the feed).
+     *
+     * @param  array<int, array<string, mixed>>  $existingEvents
+     * @return array<int, array<string, mixed>>
+     */
+    private function fetchMeetingEvents(User $user, Carbon $start, Carbon $end, array $existingEvents = []): array
     {
+        // Collect meeting_ids already covered by real calendar_event rows
+        $coveredMeetingIds = array_filter(array_column($existingEvents, 'meeting_id'));
+
         $participantMeetingIds = MeetingParticipant::where('user_id', $user->id)
             ->pluck('meeting_id');
 
@@ -114,6 +125,7 @@ class CalendarService
                 ->orWhere('secretary_id', $user->id)
                 ->orWhereIn('id', $participantMeetingIds)
             )
+            ->whereNotIn('id', $coveredMeetingIds)
             ->get()
             ->map(function (Meeting $m) {
                 $endAt = $m->scheduled_at->copy()->addMinutes($m->duration_minutes ?? 60);
@@ -127,6 +139,7 @@ class CalendarService
                     'all_day'       => false,
                     'color'         => '#3B82F6',
                     'url'           => '/meetings/' . $m->id,
+                    'meeting_id'    => null,
                 ];
             })
             ->values()
