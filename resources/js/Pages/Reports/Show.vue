@@ -144,6 +144,14 @@ const saveContent = () => {
         onSuccess: () => { editingContent.value = false; },
     });
 };
+
+// Copy the AI draft into the content editor for human review/edit before save.
+// The draft is NEVER auto-saved — the author edits + saves it themselves.
+const useAiDraftAsContent = () => {
+    editForm.content = props.report.ai_draft ?? '';
+    activeTab.value = 'content';
+    editingContent.value = true;
+};
 </script>
 
 <template>
@@ -400,16 +408,31 @@ const saveContent = () => {
                     <div v-if="activeTab === 'ai'" class="p-5">
                         <p class="text-xs font-semibold mb-3" style="color: var(--text-muted);">Draft AI</p>
 
-                        <div
-                            v-if="report.has_ai_draft && report.ai_draft"
-                            class="rounded-lg p-4 text-sm leading-relaxed whitespace-pre-wrap"
-                            style="background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.25); color: var(--text-secondary);"
-                        >
-                            <div class="flex items-center gap-2 mb-2">
-                                <Sparkles :size="14" style="color: #8B5CF6;" />
-                                <span class="text-xs font-semibold" style="color: #8B5CF6;">Draft AI</span>
+                        <div v-if="report.has_ai_draft && report.ai_draft">
+                            <div
+                                class="rounded-lg p-4 text-sm leading-relaxed"
+                                style="background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.25); color: var(--text-secondary);"
+                            >
+                                <div class="flex items-center gap-2 mb-2">
+                                    <Sparkles :size="14" style="color: #8B5CF6;" />
+                                    <span class="text-xs font-semibold" style="color: #8B5CF6;">[AI Generated] Draft Laporan</span>
+                                </div>
+                                <div class="prose-rte" v-html="report.ai_draft" />
                             </div>
-                            {{ report.ai_draft }}
+
+                            <!-- Human-review action: copy draft into the content editor -->
+                            <div v-if="can.update" class="flex items-center gap-2 mt-3">
+                                <button
+                                    @click="useAiDraftAsContent"
+                                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white"
+                                    style="background: #3B82F6;"
+                                >
+                                    <Sparkles :size="13" /> Gunakan sebagai Konten
+                                </button>
+                                <span class="text-[11px]" style="color: var(--text-muted);">
+                                    Salin draft ke editor untuk diperiksa &amp; diedit sebelum disimpan.
+                                </span>
+                            </div>
                         </div>
 
                         <div v-else class="text-center py-8">

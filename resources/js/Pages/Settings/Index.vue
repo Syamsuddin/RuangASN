@@ -5,7 +5,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import { useTheme } from '@/composables/useTheme';
 import {
     User, Lock, Shield, Palette, Bell, Monitor, LogOut,
-    Eye, EyeOff, Sun, Moon, Upload, CheckCircle, Copy,
+    Eye, EyeOff, Sun, Moon, Upload, CheckCircle, Copy, BrainCircuit,
 } from 'lucide-vue-next';
 
 interface UserData {
@@ -46,7 +46,7 @@ const mfaSetup     = computed(() => flash.value.mfa_setup as { secret: string; q
 const backupCodes  = computed(() => flash.value.backup_codes as string[] | null);
 const successMsg   = computed(() => flash.value.success as string | null);
 
-type Section = 'profil' | 'password' | 'keamanan' | 'tampilan' | 'notifikasi' | 'sesi';
+type Section = 'profil' | 'password' | 'keamanan' | 'tampilan' | 'notifikasi' | 'ai' | 'sesi';
 
 const activeSection = ref<Section>('profil');
 
@@ -56,6 +56,7 @@ const navItems: { id: Section; label: string; icon: any }[] = [
     { id: 'keamanan',    label: 'Keamanan (MFA)', icon: Shield },
     { id: 'tampilan',    label: 'Tampilan',       icon: Palette },
     { id: 'notifikasi',  label: 'Notifikasi',     icon: Bell },
+    { id: 'ai',          label: 'AI & Memori',    icon: BrainCircuit },
     { id: 'sesi',        label: 'Sesi Aktif',     icon: Monitor },
 ];
 
@@ -669,6 +670,25 @@ const pwStrength = computed(() => {
                         >
                             <Bell :size="18" />
                             Buka Halaman Preferensi Notifikasi
+                        </Link>
+                    </div>
+                </section>
+
+                <!-- ── AI & MEMORI ── -->
+                <section v-if="activeSection === 'ai'" class="space-y-5">
+                    <div>
+                        <h2 class="text-lg font-semibold" style="color: var(--text-primary);">AI &amp; Memori</h2>
+                        <p class="text-sm mt-0.5" style="color: var(--text-muted);">Kelola catatan yang diingat asisten AI tentang Anda.</p>
+                    </div>
+
+                    <div class="rounded-xl border p-5" style="background: var(--card-bg); border-color: var(--border-color);">
+                        <Link
+                            href="/ai/memories"
+                            class="flex items-center gap-3 text-sm font-medium transition"
+                            style="color: #8B5CF6;"
+                        >
+                            <BrainCircuit :size="18" />
+                            Kelola Memori AI
                         </Link>
                     </div>
                 </section>

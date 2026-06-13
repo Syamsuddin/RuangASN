@@ -2,11 +2,13 @@
 
 namespace App\Services;
 
+use App\Enums\AiAgentType;
 use App\Enums\AuditAction;
 use App\Enums\ReportStatus;
 use App\Models\Report;
 use App\Models\ReportStatusHistory;
 use App\Models\User;
+use App\Services\Ai\AiOrchestratorService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -125,15 +127,40 @@ class ReportService
         return $this->transition($report, ReportStatus::PUBLISHED, $actor, $notes);
     }
 
-    public function generateAiDraft(Report $report): Report
+    /**
+     * Generate the AI draft via the ReportAgent (deterministic with the fake
+     * provider) and store it in `ai_draft` for HUMAN review. The draft is never
+     * written to `content` (AXIOM-04) — the author copies + edits it.
+     *
+     * @param User|null $actor The user the agent acts as; defaults to the
+     *                         report author (who can always view the report).
+     */
+    public function generateAiDraft(Report $report, ?User $actor = null): Report
     {
-        return DB::transaction(function () use ($report) {
-            $type  = $report->report_type->value ?? 'laporan';
-            $start = $report->period_start_date?->format('d/m/Y') ?? '-';
-            $end   = $report->period_end_date?->format('d/m/Y') ?? '-';
+        return DB::transaction(function () use ($report, $actor) {
+            if ($actor === null) {
+                /** @var User|null $author */
+                $author = $report->author;
+                $actor  = $author;
+            }
 
-            $draft = "Draft laporan {$type} periode {$start}–{$end}. "
-                . "[AI draft akan tersedia di Fase 3]";
+            $draft = null;
+            if ($actor !== null) {
+                $draft = app(AiOrchestratorService::class)->generateDraft(
+                    AiAgentType::REPORT,
+                    $actor,
+                    'Susun draft laporan ' . $report->title,
+                    ['context_type' => 'report', 'context_id' => $report->id],
+                );
+            }
+
+            if ($draft === null || trim(strip_tags($draft)) === '') {
+                // Defensive fallback so ai_draft is never empty.
+                $type  = $report->report_type->value ?? 'laporan';
+                $start = $report->period_start_date?->format('d/m/Y') ?? '-';
+                $end   = $report->period_end_date?->format('d/m/Y') ?? '-';
+                $draft = "<h2>{$report->title}</h2><p>Draft laporan {$type} periode {$start}–{$end}.</p>";
+            }
 
             $report->update(['ai_draft' => $draft]);
 

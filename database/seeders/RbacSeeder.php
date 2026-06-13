@@ -52,6 +52,12 @@ class RbacSeeder extends Seeder
             'knowledge.publish', 'knowledge.archive',
             // Search
             'search.search', 'search.advanced',
+            // Performance / SKP
+            'performance.view.own', 'performance.view.team', 'performance.view.all',
+            'performance.skp.create', 'performance.skp.submit', 'performance.skp.review',
+            'performance.skp.approve', 'performance.feedback.add', 'performance.analytics.view',
+            // AI Foundation (Phase 3)
+            'ai.query', 'ai.conversation.view.own', 'ai.settings.manage', 'ai.model.select',
         ];
 
         foreach ($permissions as $perm) {
@@ -89,6 +95,10 @@ class RbacSeeder extends Seeder
             'knowledge.view.internal', 'knowledge.create', 'knowledge.edit.own',
             'knowledge.publish', 'knowledge.archive',
             'search.search', 'search.advanced',
+            'performance.view.own', 'performance.view.team', 'performance.view.all',
+            'performance.skp.create', 'performance.skp.submit', 'performance.skp.review',
+            'performance.skp.approve', 'performance.feedback.add', 'performance.analytics.view',
+            'ai.query', 'ai.conversation.view.own', 'ai.settings.manage', 'ai.model.select',
         ]);
 
         $kepalaOpd = Role::firstOrCreate(['name' => 'kepala_opd', 'guard_name' => 'web']);
@@ -114,6 +124,10 @@ class RbacSeeder extends Seeder
             'knowledge.view.internal', 'knowledge.create', 'knowledge.edit.own',
             'knowledge.publish', 'knowledge.archive',
             'search.search', 'search.advanced',
+            'performance.view.own', 'performance.view.team', 'performance.view.all',
+            'performance.skp.create', 'performance.skp.submit', 'performance.skp.review',
+            'performance.skp.approve', 'performance.feedback.add', 'performance.analytics.view',
+            'ai.query', 'ai.conversation.view.own',
         ]);
 
         $kepalaBidang = Role::firstOrCreate(['name' => 'kepala_bidang', 'guard_name' => 'web']);
@@ -138,6 +152,10 @@ class RbacSeeder extends Seeder
             'knowledge.view.internal', 'knowledge.create', 'knowledge.edit.own',
             'knowledge.publish', 'knowledge.archive',
             'search.search', 'search.advanced',
+            'performance.view.own', 'performance.view.team', 'performance.view.all',
+            'performance.skp.create', 'performance.skp.submit', 'performance.skp.review',
+            'performance.feedback.add', 'performance.analytics.view',
+            'ai.query', 'ai.conversation.view.own',
         ]);
 
         $asn = Role::firstOrCreate(['name' => 'asn', 'guard_name' => 'web']);
@@ -156,6 +174,8 @@ class RbacSeeder extends Seeder
             'profile.view.own', 'profile.edit.own', 'profile.mfa.manage',
             'knowledge.view.internal', 'knowledge.create', 'knowledge.edit.own',
             'search.search', 'search.advanced',
+            'performance.view.own', 'performance.skp.create', 'performance.skp.submit',
+            'ai.query', 'ai.conversation.view.own',
         ]);
     }
 }

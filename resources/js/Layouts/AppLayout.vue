@@ -4,6 +4,7 @@ import { Link, usePage, router } from '@inertiajs/vue3';
 import { useTheme } from '@/composables/useTheme';
 import { useNotifications } from '@/composables/useNotifications';
 import CommandPalette from '@/components/CommandPalette.vue';
+import AiPanel from '@/components/ai/AiPanel.vue';
 import {
     LayoutDashboard, BriefcaseBusiness, CheckSquare, Calendar,
     Users, Video, FolderOpen, FileText, BarChart3, MessageSquare,
@@ -25,6 +26,10 @@ const { notifications, unreadCount, markRead, markAllRead, startEchoListener } =
 const bellOpen      = ref(false);
 const profileOpen   = ref(false);
 const paletteOpen   = ref(false);
+const aiPanelOpen   = ref(false);
+
+const toggleAiPanel = () => { aiPanelOpen.value = !aiPanelOpen.value; };
+const closeAiPanel  = () => { aiPanelOpen.value = false; };
 
 const openPalette = () => { paletteOpen.value = true; };
 const closePalette = () => { paletteOpen.value = false; };
@@ -235,16 +240,19 @@ const initials = computed(() => {
                 </template>
             </nav>
 
-            <!-- AI Assistant button -->
+            <!-- AI Assistant button (toggles the floating AI panel) -->
             <div class="px-2 py-2 border-t shrink-0" style="border-color: var(--border-color);">
-                <Link
-                    href="/ai"
-                    class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors"
+                <button
+                    type="button"
+                    @click="toggleAiPanel"
+                    class="w-full flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors"
                     style="background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.15)); color: #8B5CF6; border: 1px solid rgba(139,92,246,0.25);"
+                    :title="collapsed ? 'AI Assistant' : undefined"
+                    aria-label="Buka AI Assistant"
                 >
                     <Sparkles :size="18" class="shrink-0" />
                     <span v-if="!collapsed">AI Assistant</span>
-                </Link>
+                </button>
             </div>
 
             <!-- User profile -->
@@ -463,6 +471,22 @@ const initials = computed(() => {
         </div>
     </div>
 
+    <!-- Floating AI action button -->
+    <button
+        v-if="!aiPanelOpen"
+        type="button"
+        @click="toggleAiPanel"
+        class="fixed bottom-6 right-6 z-30 w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg transition-transform hover:scale-105"
+        style="background: linear-gradient(135deg, #3B82F6, #8B5CF6); box-shadow: 0 6px 20px rgba(139,92,246,0.4);"
+        aria-label="Buka AI Assistant"
+        title="AI RuangASN"
+    >
+        <Sparkles :size="22" />
+    </button>
+
     <!-- Command Palette -->
     <CommandPalette :open="paletteOpen" @close="closePalette" />
+
+    <!-- Floating AI panel -->
+    <AiPanel :open="aiPanelOpen" @close="closeAiPanel" />
 </template>

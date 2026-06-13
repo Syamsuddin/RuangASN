@@ -2,11 +2,13 @@
 
 namespace App\Services;
 
+use App\Enums\AiAgentType;
 use App\Enums\AttendanceStatus;
 use App\Enums\AuditAction;
 use App\Enums\CalendarType;
 use App\Enums\MeetingStatus;
 use App\Enums\TaskType;
+use App\Services\Ai\AiOrchestratorService;
 use App\Models\CalendarEvent;
 use App\Models\Meeting;
 use App\Models\MeetingActionItem;
@@ -249,6 +251,34 @@ class MeetingService
             return MeetingMinute::updateOrCreate(
                 ['meeting_id' => $meeting->id],
                 [...$data, 'created_by' => $author->id]
+            );
+        });
+    }
+
+    /**
+     * Generate an AI notulensi draft via the MeetingAgent (deterministic with
+     * the fake provider) and store it in meeting_minutes.ai_draft for HUMAN
+     * review. The final `content` is left untouched — a human edits + saves it
+     * through upsertMinutes (AXIOM-04).
+     */
+    public function generateMinutesDraft(Meeting $meeting, User $author): MeetingMinute
+    {
+        return DB::transaction(function () use ($meeting, $author) {
+            $draft = app(AiOrchestratorService::class)->generateDraft(
+                AiAgentType::MEETING,
+                $author,
+                'Susun notulensi rapat ' . $meeting->title,
+                ['context_type' => 'meeting', 'context_id' => $meeting->id],
+            );
+
+            if ($draft === null || trim(strip_tags($draft)) === '') {
+                $draft = '<h2>Notulensi Rapat: ' . e($meeting->title) . '</h2>'
+                    . '<p>Draft notulensi belum dapat disusun karena data rapat belum lengkap.</p>';
+            }
+
+            return MeetingMinute::updateOrCreate(
+                ['meeting_id' => $meeting->id],
+                ['ai_draft' => $draft, 'created_by' => $author->id]
             );
         });
     }

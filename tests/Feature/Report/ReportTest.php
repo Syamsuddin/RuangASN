@@ -308,8 +308,13 @@ class ReportTest extends TestCase
         $response->assertRedirect();
 
         $report->refresh();
+        // The draft is now produced (deterministically) by the ReportAgent from
+        // the report's own data — derived from the title + period, never empty.
         $this->assertNotNull($report->ai_draft);
-        $this->assertStringContainsString('Draft laporan', $report->ai_draft);
-        $this->assertStringContainsString('[AI draft akan tersedia di Fase 3]', $report->ai_draft);
+        $this->assertStringContainsString('Laporan Kegiatan Bulanan Dinas Uji', $report->ai_draft);
+        $this->assertStringContainsString('Pendahuluan', $report->ai_draft);
+        // AXIOM-04: the draft is NEVER auto-saved to the report content; the
+        // author's original content is left untouched for human review/edit.
+        $this->assertSame('Isi laporan kegiatan.', $report->content);
     }
 }

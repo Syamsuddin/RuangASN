@@ -421,6 +421,18 @@ parameters:
 			path: app/Models/Team.php
 
 		-
+			message: '#^Unsafe usage of new static\(\)\.$#'
+			identifier: new.static
+			count: 1
+			path: app/Models/SkpPlan.php
+
+		-
+			message: '#^Unsafe usage of new static\(\)\.$#'
+			identifier: new.static
+			count: 1
+			path: app/Models/SkpPeriod.php
+
+		-
 			message: '#^Method App\\Models\\User\:\:notificationPreference\(\) should return Illuminate\\Database\\Eloquent\\Relations\\HasOne\<App\\Models\\NotificationPreference, App\\Models\\User\> but returns Illuminate\\Database\\Eloquent\\Relations\\HasOne\<App\\Models\\NotificationPreference, \$this\(App\\Models\\User\)\>\.$#'
 			identifier: return.type
 			count: 1
@@ -473,3 +485,225 @@ parameters:
 			identifier: argument.unresolvableType
 			count: 1
 			path: app/Http/Resources/KnowledgeArticleResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 5
+			path: app/Http/Resources/SkpPlanResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Http/Resources/SkpPlanResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$year\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SkpPlanResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$semester\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SkpPlanResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$start_date\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SkpPlanResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$end_date\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SkpPlanResource.php
+
+		-
+			message: '#^Anonymous function should return Illuminate\\Support\\Collection\<int, array\{id\: mixed, perspective\: mixed, name\: mixed, target_value\: float, target_unit\: mixed, weight\: float, realization_value\: float\|null, achievement_pct\: float\|null, \.\.\.\}\> but returns Illuminate\\Support\\Collection\<int, array\{id\: mixed, perspective\: mixed, name\: mixed, target_value\: float, target_unit\: mixed, weight\: float, realization_value\: float\|null, achievement_pct\: float\|null, \.\.\.\}\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Resources/SkpPlanResource.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Resources/SkpPlanResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$perspective\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SkpPlanResource.php
+
+		-
+			message: '#^Using nullsafe property access "\?\->value" on left side of \?\? is unnecessary\. Use \-> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Http/Resources/SkpPlanResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$target_value\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SkpPlanResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$target_unit\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SkpPlanResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$weight\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Resources/SkpPlanResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$realization_value\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SkpPlanResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$achievement_pct\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SkpPlanResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$superior_expectation\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SkpPlanResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$sort_order\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SkpPlanResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$parent_indicator_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SkpPlanResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$performance_score\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SkpPlanResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$behavior_score\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SkpPlanResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$final_score\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SkpPlanResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$predicate\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Resources/SkpPlanResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$behavior_service\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SkpPlanResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$behavior_commit\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SkpPlanResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$behavior_initiative\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SkpPlanResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$behavior_teamwork\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SkpPlanResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$behavior_leadership\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SkpPlanResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$superior_feedback\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SkpPlanResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$evaluated_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SkpPlanResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$finalized_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/SkpPlanResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$predicate\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/PerformanceController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\->value" on left side of \?\? is unnecessary\. Use \-> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/PerformanceController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$final_score\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Controllers/PerformanceController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\SkpPlan\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/PerformanceController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/PerformanceController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/PerformanceController.php
+
+		-
+			message: '#^Using nullsafe property access on non-nullable type App\\Enums\\PerformanceStatus\. Use \-> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/PerformanceController.php

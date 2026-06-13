@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin;
+use App\Http\Controllers\AiController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Auth\LoginController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PerformanceController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SearchController;
@@ -76,6 +78,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/{meeting}/decisions',                                [MeetingController::class, 'addDecision'])->name('decisions.store');
         Route::post('/{meeting}/action-items',                             [MeetingController::class, 'addActionItem'])->name('action_items.store');
         Route::post('/{meeting}/minutes',                                  [MeetingController::class, 'upsertMinutes'])->name('minutes.upsert');
+        Route::post('/{meeting}/minutes/ai-draft',                         [MeetingController::class, 'generateMinutesDraft'])->name('minutes.ai_draft');
         Route::post('/minutes/{minutes}/approve',                          [MeetingController::class, 'approveMinutes'])->name('minutes.approve');
         Route::get('/{meeting}/checkin-qr',                               [MeetingController::class, 'checkInQr'])->name('checkin_qr');
         Route::get('/{meeting}/checkin',                                  [MeetingController::class, 'checkIn'])->name('checkin')->middleware('signed');
@@ -143,6 +146,25 @@ Route::middleware('auth')->group(function () {
         Route::post('/{article}/helpful', [KnowledgeController::class, 'markHelpful'])->name('helpful');
     });
 
+    // ── Performance / SKP Workspace ──
+    Route::prefix('performance')->name('performance.')->group(function () {
+        Route::get('/', [PerformanceController::class, 'index'])->name('index');
+        Route::get('/analytics', [PerformanceController::class, 'analytics'])->name('analytics');
+        Route::post('/periods', [PerformanceController::class, 'storePeriod'])->name('periods.store');
+        Route::post('/plans', [PerformanceController::class, 'storePlan'])->name('plans.store');
+        Route::get('/plans/{plan}', [PerformanceController::class, 'show'])->name('show');
+        Route::patch('/plans/{plan}', [PerformanceController::class, 'updatePlan'])->name('plans.update');
+        Route::post('/plans/{plan}/submit', [PerformanceController::class, 'submit'])->name('submit');
+        Route::post('/plans/{plan}/approve', [PerformanceController::class, 'approve'])->name('approve');
+        Route::post('/plans/{plan}/transition', [PerformanceController::class, 'transition'])->name('transition');
+        Route::post('/plans/{plan}/evaluate', [PerformanceController::class, 'evaluate'])->name('evaluate');
+        Route::delete('/plans/{plan}', [PerformanceController::class, 'destroy'])->name('plans.destroy');
+        Route::post('/plans/{plan}/indicators', [PerformanceController::class, 'addIndicator'])->name('indicators.store');
+        Route::patch('/indicators/{indicator}', [PerformanceController::class, 'updateIndicator'])->name('indicators.update');
+        Route::delete('/indicators/{indicator}', [PerformanceController::class, 'deleteIndicator'])->name('indicators.destroy');
+        Route::post('/indicators/{indicator}/realizations', [PerformanceController::class, 'addRealization'])->name('realizations.store');
+    });
+
     // ── Admin ──
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/users', [Admin\UserController::class, 'index'])->name('users.index');
@@ -181,5 +203,17 @@ Route::middleware('auth')->group(function () {
         Route::patch('/read-all',                  [NotificationController::class, 'markAllRead'])->name('read_all');
         Route::patch('/{notification}/read',       [NotificationController::class, 'markRead'])->name('read');
         Route::delete('/{notification}',           [NotificationController::class, 'destroy'])->name('destroy');
+    });
+
+    // ── AI Foundation (Phase 3) ──
+    Route::prefix('ai')->name('ai.')->group(function () {
+        Route::get('/',                            [AiController::class, 'index'])->name('index');
+        Route::get('/conversations',               [AiController::class, 'conversations'])->name('conversations');
+        Route::get('/conversations/{conversation}', [AiController::class, 'show'])->name('show');
+        Route::post('/send',                       [AiController::class, 'send'])->name('send');
+        Route::post('/messages/{message}/confirm', [AiController::class, 'confirmAction'])->name('confirm');
+        Route::post('/messages/{message}/reject',  [AiController::class, 'rejectAction'])->name('reject');
+        Route::get('/memories',                    [AiController::class, 'memories'])->name('memories');
+        Route::patch('/memories/{memory}',         [AiController::class, 'updateMemory'])->name('memories.update');
     });
 });

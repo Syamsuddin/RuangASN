@@ -148,11 +148,11 @@ class ReportController extends Controller
         return back()->with('success', 'Laporan berhasil dipublikasikan.');
     }
 
-    public function generateAiDraft(Report $report): RedirectResponse
+    public function generateAiDraft(Request $request, Report $report): RedirectResponse
     {
         $this->authorize('generateAiDraft', $report);
 
-        $this->reportService->generateAiDraft($report);
+        $this->reportService->generateAiDraft($report, $request->user());
 
         return back()->with('success', 'Draft AI berhasil digenerate.');
     }

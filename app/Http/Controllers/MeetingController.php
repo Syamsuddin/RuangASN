@@ -268,6 +268,23 @@ class MeetingController extends Controller
         return back()->with('success', 'Notulensi berhasil disimpan.');
     }
 
+    /**
+     * POST /meetings/{meeting}/minutes/ai-draft
+     *
+     * Host/secretary (meeting.minutes.create) generate an AI notulensi draft
+     * from the meeting's agenda + decisions + participants. The draft is stored
+     * in meeting_minutes.ai_draft for HUMAN review (never auto-saved as the
+     * final content) and returned so the editor can be pre-filled (AXIOM-04).
+     */
+    public function generateMinutesDraft(Request $request, Meeting $meeting): RedirectResponse
+    {
+        $this->authorize('recordMinutes', $meeting);
+
+        $this->meetingService->generateMinutesDraft($meeting, $request->user());
+
+        return back()->with('success', 'Draft notulensi AI berhasil digenerate.');
+    }
+
     public function approveMinutes(Request $request, MeetingMinute $minutes): RedirectResponse
     {
         $this->authorize('approveMinutes', Meeting::class);

@@ -6,7 +6,7 @@ import RichTextEditor from '@/components/RichTextEditor.vue';
 import {
     ArrowLeft, Clock, Video, MapPin, Users, Building2,
     Monitor, Plus, CheckCircle2, Circle, ChevronRight,
-    FileText, ListChecks, UserCheck, Gavel, Zap, ScrollText, QrCode,
+    FileText, ListChecks, UserCheck, Gavel, Zap, ScrollText, QrCode, Sparkles,
 } from 'lucide-vue-next';
 
 interface Participant {
@@ -211,6 +211,23 @@ const submitActionItem = () => {
 const minutesForm = useForm({ content: props.meeting.minutes?.content ?? '', status: 'draft' });
 const submitMinutes = () => {
     minutesForm.post(`/meetings/${props.meeting.id}/minutes`, { preserveScroll: true });
+};
+
+// AI notulensi draft (stored in meeting_minutes.ai_draft for human review).
+const aiDraftForm = useForm({});
+const generateMinutesAi = () => {
+    aiDraftForm.post(`/meetings/${props.meeting.id}/minutes/ai-draft`, {
+        preserveScroll: true,
+        // After the page reloads, the draft is available on meeting.minutes.ai_draft.
+        onSuccess: () => { useAiDraftAsMinutes(); },
+    });
+};
+
+// Fill the editor with the AI draft for human review/edit before saving via the
+// existing upsertMinutes flow. The draft is NEVER auto-saved as final content.
+const useAiDraftAsMinutes = () => {
+    const draft = props.meeting.minutes?.ai_draft;
+    if (draft) minutesForm.content = draft;
 };
 
 const approveMinutes = () => {
@@ -588,6 +605,30 @@ const recordAttendance = (participantId: string, status: string) => {
 
                             <!-- Content editor (if can record) -->
                             <div v-if="can.recordMinutes" class="space-y-3 mb-4">
+                                <!-- AI draft toolbar -->
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <button
+                                        @click="generateMinutesAi"
+                                        :disabled="aiDraftForm.processing"
+                                        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white disabled:opacity-50"
+                                        style="background: #8B5CF6;"
+                                    >
+                                        <Sparkles :size="13" />
+                                        {{ aiDraftForm.processing ? 'Menyusun...' : 'Generate Notulensi dengan AI' }}
+                                    </button>
+                                    <button
+                                        v-if="meeting.minutes?.ai_draft"
+                                        @click="useAiDraftAsMinutes"
+                                        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border"
+                                        style="border-color: rgba(139,92,246,0.3); color: #8B5CF6; background: rgba(139,92,246,0.08);"
+                                    >
+                                        <Sparkles :size="13" /> Muat Draft AI ke Editor
+                                    </button>
+                                    <span class="text-[11px]" style="color: var(--text-muted);">
+                                        Draft AI hanya bantuan — periksa &amp; edit sebelum menyimpan.
+                                    </span>
+                                </div>
+
                                 <RichTextEditor
                                     v-model="minutesForm.content"
                                     placeholder="Tulis notulensi rapat di sini..."
