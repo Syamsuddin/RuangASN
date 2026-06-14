@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property bool $in_app
  * @property bool $email
  * @property bool $push
+ * @property bool $whatsapp
  * @property bool $task_assigned
  * @property bool $task_due
  * @property bool $meeting_invited
@@ -31,7 +32,7 @@ class NotificationPreference extends Model
 
     protected $fillable = [
         'id', 'user_id',
-        'in_app', 'email', 'push',
+        'in_app', 'email', 'push', 'whatsapp',
         'task_assigned', 'task_due', 'meeting_invited',
         'document_approval', 'report_status',
         'digest_frequency',
@@ -41,6 +42,7 @@ class NotificationPreference extends Model
         'in_app'            => 'boolean',
         'email'             => 'boolean',
         'push'              => 'boolean',
+        'whatsapp'          => 'boolean',
         'task_assigned'     => 'boolean',
         'task_due'          => 'boolean',
         'meeting_invited'   => 'boolean',

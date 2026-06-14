@@ -201,6 +201,19 @@ class IntegrationSettingsService
                     ['key' => 'api_key', 'label' => 'API Key', 'type' => 'secret', 'secret' => true],
                 ],
             ],
+            'sipd' => [
+                'label'       => 'Integrasi SIPD',
+                'icon'        => 'Landmark',
+                'description' => 'Sinkronisasi program & kegiatan SIPD (Sistem Informasi Pemerintahan Daerah).',
+                'phase4'      => true,
+                'fields'      => [
+                    ['key' => 'enabled', 'label' => 'Aktif', 'type' => 'bool'],
+                    ['key' => 'base_url', 'label' => 'Base URL', 'type' => 'text', 'placeholder' => 'https://sipd.kemendagri.go.id'],
+                    ['key' => 'client_id', 'label' => 'Client ID', 'type' => 'text'],
+                    ['key' => 'client_secret', 'label' => 'Client Secret', 'type' => 'secret', 'secret' => true],
+                    ['key' => 'api_key', 'label' => 'API Key', 'type' => 'secret', 'secret' => true],
+                ],
+            ],
             'sso' => [
                 'label'       => 'SSO Nasional',
                 'icon'        => 'KeyRound',

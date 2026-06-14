@@ -223,4 +223,52 @@ class NotificationTest extends TestCase
             ->patch("/notifications/{$notif->id}/read")
             ->assertForbidden();
     }
+
+    // 10. Malformed phone + whatsapp pref on → WhatsApp send skipped (no
+    // IntegrationRun), but the in-app notification is still created.
+    public function test_malformed_phone_skips_whatsapp_but_keeps_in_app(): void
+    {
+        config()->set('integrations.live', false);
+
+        // Configure the org's WhatsApp integration so isConfigured() passes —
+        // isolating the phone-validation gate as the reason for skipping.
+        app(\App\Services\IntegrationSettingsService::class)->save($this->org, [
+            'group'  => 'whatsapp',
+            'fields' => [
+                'enabled'         => true,
+                'phone_number_id' => '123',
+                'access_token'    => 'wa-access-token',
+            ],
+        ], $this->userA);
+
+        $this->userA->update(['phone' => 'not-a-phone']); // malformed
+
+        NotificationPreference::create([
+            'id'               => (string) Str::ulid(),
+            'user_id'          => $this->userA->id,
+            'in_app'           => true,
+            'email'            => false,
+            'push'             => false,
+            'whatsapp'         => true,
+            'task_assigned'    => true,
+            'task_due'         => true,
+            'meeting_invited'  => true,
+            'document_approval'=> true,
+            'report_status'    => true,
+            'digest_frequency' => 'realtime',
+        ]);
+
+        $service = app(NotificationService::class);
+        $notif   = $service->send($this->userA, NotificationType::SYSTEM, 'Hi', 'Body');
+
+        // In-app notification persisted…
+        $this->assertDatabaseHas('app_notifications', ['id' => $notif->id]);
+
+        // …but no outbound WhatsApp IntegrationRun was created (send skipped).
+        $this->assertDatabaseMissing('integration_runs', [
+            'provider'  => 'whatsapp',
+            'direction' => 'outbound',
+            'operation' => 'send_message',
+        ]);
+    }
 }

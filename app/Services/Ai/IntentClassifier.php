@@ -18,6 +18,18 @@ class IntentClassifier
     {
         $q = ' ' . mb_strtolower(trim($query)) . ' ';
 
+        // ── Executive brief (checked early: "ringkasan eksekutif" / "dashboard
+        //    pimpinan" are specific phrases that must NOT fall into the generic
+        //    summarize/meeting branch). ──────────────────────────────────────
+        if ($this->matches($q, ['ringkasan eksekutif', 'eksekutif', 'dashboard pimpinan', 'brief eksekutif', 'ringkasan pimpinan'])) {
+            return ['intent' => AiIntent::EXECUTIVE_BRIEF, 'agent' => AiAgentType::EXECUTIVE];
+        }
+
+        // ── Workload analysis ───────────────────────────────────────────────
+        if ($this->matches($q, ['beban kerja', 'workload', 'distribusi tugas', 'beban tugas'])) {
+            return ['intent' => AiIntent::WORKLOAD_QUERY, 'agent' => AiAgentType::WORKLOAD];
+        }
+
         // ── Performance / SKP (checked FIRST: these keywords are highly
         //    specific, so a mixed-domain query like "capaian SKP dari rapat
         //    kemarin" routes to PERFORMANCE rather than the generic meeting

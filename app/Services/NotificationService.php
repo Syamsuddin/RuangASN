@@ -11,6 +11,7 @@ use App\Models\Meeting;
 use App\Models\Report;
 use App\Models\Task;
 use App\Models\User;
+use App\Services\Integrations\Clients\WhatsAppClient;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -43,6 +44,11 @@ class NotificationService
 
         // Queue email if recipient has email preference enabled
         $this->maybeSendEmail($recipient, $notif, $type);
+
+        // Dispatch via WhatsApp if the recipient opted in AND the org's WhatsApp
+        // integration is configured. Wrapped so a messaging failure never breaks
+        // the in-app notification (which is already persisted above).
+        $this->maybeSendWhatsApp($recipient, $notif, $type);
 
         return $notif;
     }
@@ -134,6 +140,61 @@ class NotificationService
                 'error'           => $e->getMessage(),
             ]);
         }
+    }
+
+    private function maybeSendWhatsApp(User $recipient, AppNotification $notif, NotificationType $type): void
+    {
+        try {
+            $prefs = $recipient->prefs();
+
+            if (! $prefs->whatsapp) {
+                return;
+            }
+
+            if (! $this->typeEnabledInPrefs($prefs, $type)) {
+                return;
+            }
+
+            $org = $recipient->organization;
+            if ($org === null) {
+                return;
+            }
+
+            /** @var WhatsAppClient $client */
+            $client = app(WhatsAppClient::class);
+            if (! $client->isConfigured($org)) {
+                return;
+            }
+
+            $to = (string) ($recipient->phone ?? '');
+            if (! $this->isPlausiblePhone($to)) {
+                // Malformed / missing number → skip silently (no send, no throw).
+                // Avoids creating a doomed IntegrationRun for unsendable input.
+                return;
+            }
+
+            // Records its own IntegrationRun (success/failure) for observability.
+            $client->send($org, $to, "{$notif->title}\n\n{$notif->body}");
+        } catch (\Throwable $e) {
+            Log::warning('NotificationService: failed to dispatch WhatsApp', [
+                'recipient_id'    => $recipient->id,
+                'notification_id' => $notif->id,
+                'error'           => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Cheap plausibility gate for a WhatsApp recipient number. Accepts an
+     * optional leading + followed by 8–15 digits (E.164 ceiling), after stripping
+     * spaces, dashes and parentheses. Not a strict validator — just enough to
+     * skip obviously malformed input before hitting the provider.
+     */
+    private function isPlausiblePhone(string $phone): bool
+    {
+        $normalized = (string) preg_replace('/[\s\-()]/', '', $phone);
+
+        return preg_match('/^\+?[1-9]\d{7,14}$/', $normalized) === 1;
     }
 
     private function typeEnabledInPrefs(\App\Models\NotificationPreference $prefs, NotificationType $type): bool

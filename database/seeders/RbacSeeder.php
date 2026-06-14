@@ -31,6 +31,9 @@ class RbacSeeder extends Seeder
             'meeting.view.own', 'meeting.view.all', 'meeting.create', 'meeting.edit.own',
             'meeting.host', 'meeting.secretary', 'meeting.minutes.create', 'meeting.minutes.approve',
             'meeting.action_item.create',
+            // Project
+            'project.view.own', 'project.view.all', 'project.create', 'project.edit',
+            'project.member.manage', 'project.milestone.manage', 'project.risk.manage', 'project.close',
             // Document
             'document.view.public', 'document.view.internal', 'document.view.confidential', 'document.view.restricted',
             'document.create', 'document.edit.own', 'document.submit', 'document.approve',
@@ -56,10 +59,16 @@ class RbacSeeder extends Seeder
             'performance.view.own', 'performance.view.team', 'performance.view.all',
             'performance.skp.create', 'performance.skp.submit', 'performance.skp.review',
             'performance.skp.approve', 'performance.feedback.add', 'performance.analytics.view',
+            // Analytics / Executive Dashboard (matrix §187-191)
+            'analytics.view.personal', 'analytics.view.team', 'analytics.view.opd', 'analytics.view.pemda',
             // AI Foundation (Phase 3)
             'ai.query', 'ai.conversation.view.own', 'ai.settings.manage', 'ai.model.select',
             // External Integration Settings (pemda/OPD-admin level)
             'admin.integrations.view', 'admin.integrations.manage',
+            'admin.integrations.run', 'admin.integrations.webhook',
+            // Chat (Phase 4)
+            'chat.send', 'chat.view.dm', 'chat.view.channel', 'chat.channel.create',
+            'chat.channel.archive', 'chat.message.delete.own', 'chat.message.delete.any',
         ];
 
         foreach ($permissions as $perm) {
@@ -89,6 +98,8 @@ class RbacSeeder extends Seeder
             'document.create', 'document.edit.own', 'document.submit', 'document.approve',
             'document.download.confidential', 'document.version.view',
             'calendar.view.own', 'calendar.view.team', 'calendar.view.all', 'calendar.create.own', 'calendar.edit.own',
+            'project.view.own', 'project.view.all', 'project.create', 'project.edit',
+            'project.member.manage', 'project.milestone.manage', 'project.risk.manage', 'project.close',
             'report.view.own', 'report.view.team', 'report.view.all',
             'report.create', 'report.submit', 'report.approve', 'report.publish',
             'notification.view.own', 'notification.manage.own',
@@ -100,8 +111,12 @@ class RbacSeeder extends Seeder
             'performance.view.own', 'performance.view.team', 'performance.view.all',
             'performance.skp.create', 'performance.skp.submit', 'performance.skp.review',
             'performance.skp.approve', 'performance.feedback.add', 'performance.analytics.view',
+            'analytics.view.personal', 'analytics.view.team', 'analytics.view.opd', 'analytics.view.pemda',
             'ai.query', 'ai.conversation.view.own', 'ai.settings.manage', 'ai.model.select',
             'admin.integrations.view', 'admin.integrations.manage',
+            'admin.integrations.run', 'admin.integrations.webhook',
+            'chat.send', 'chat.view.dm', 'chat.view.channel', 'chat.channel.create',
+            'chat.message.delete.own', 'chat.channel.archive', 'chat.message.delete.any',
         ]);
 
         $kepalaOpd = Role::firstOrCreate(['name' => 'kepala_opd', 'guard_name' => 'web']);
@@ -119,6 +134,8 @@ class RbacSeeder extends Seeder
             'document.create', 'document.edit.own', 'document.submit', 'document.approve',
             'document.download.confidential', 'document.version.view',
             'calendar.view.own', 'calendar.view.team', 'calendar.view.all', 'calendar.create.own', 'calendar.edit.own',
+            'project.view.own', 'project.view.all', 'project.create', 'project.edit',
+            'project.member.manage', 'project.milestone.manage', 'project.risk.manage', 'project.close',
             'report.view.own', 'report.view.team', 'report.view.all',
             'report.create', 'report.submit', 'report.approve', 'report.publish',
             'notification.view.own', 'notification.manage.own',
@@ -130,7 +147,10 @@ class RbacSeeder extends Seeder
             'performance.view.own', 'performance.view.team', 'performance.view.all',
             'performance.skp.create', 'performance.skp.submit', 'performance.skp.review',
             'performance.skp.approve', 'performance.feedback.add', 'performance.analytics.view',
+            'analytics.view.personal', 'analytics.view.team', 'analytics.view.opd',
             'ai.query', 'ai.conversation.view.own',
+            'chat.send', 'chat.view.dm', 'chat.view.channel', 'chat.channel.create',
+            'chat.message.delete.own',
         ]);
 
         $kepalaBidang = Role::firstOrCreate(['name' => 'kepala_bidang', 'guard_name' => 'web']);
@@ -147,6 +167,8 @@ class RbacSeeder extends Seeder
             'document.create', 'document.edit.own', 'document.submit', 'document.approve',
             'document.download.confidential', 'document.version.view',
             'calendar.view.own', 'calendar.view.team', 'calendar.view.all', 'calendar.create.own', 'calendar.edit.own',
+            'project.view.own', 'project.view.all', 'project.create', 'project.edit',
+            'project.member.manage', 'project.milestone.manage', 'project.risk.manage',
             'report.view.own', 'report.view.team', 'report.view.all',
             'report.create', 'report.submit', 'report.approve', 'report.publish',
             'notification.view.own', 'notification.manage.own',
@@ -158,7 +180,10 @@ class RbacSeeder extends Seeder
             'performance.view.own', 'performance.view.team', 'performance.view.all',
             'performance.skp.create', 'performance.skp.submit', 'performance.skp.review',
             'performance.feedback.add', 'performance.analytics.view',
+            'analytics.view.personal', 'analytics.view.team',
             'ai.query', 'ai.conversation.view.own',
+            'chat.send', 'chat.view.dm', 'chat.view.channel', 'chat.channel.create',
+            'chat.message.delete.own',
         ]);
 
         $asn = Role::firstOrCreate(['name' => 'asn', 'guard_name' => 'web']);
@@ -172,13 +197,18 @@ class RbacSeeder extends Seeder
             'document.view.public', 'document.view.internal',
             'document.create', 'document.edit.own', 'document.submit', 'document.version.view',
             'calendar.view.own', 'calendar.view.team', 'calendar.create.own', 'calendar.edit.own',
+            'project.view.own', 'project.create', 'project.edit',
+            'project.member.manage', 'project.milestone.manage', 'project.risk.manage',
             'report.view.own', 'report.view.team', 'report.create', 'report.submit',
             'notification.view.own', 'notification.manage.own',
             'profile.view.own', 'profile.edit.own', 'profile.mfa.manage',
             'knowledge.view.internal', 'knowledge.create', 'knowledge.edit.own',
             'search.search', 'search.advanced',
             'performance.view.own', 'performance.skp.create', 'performance.skp.submit',
+            'analytics.view.personal',
             'ai.query', 'ai.conversation.view.own',
+            'chat.send', 'chat.view.dm', 'chat.view.channel', 'chat.channel.create',
+            'chat.message.delete.own',
         ]);
     }
 }

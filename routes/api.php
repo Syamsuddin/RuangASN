@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\TaskController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\MfaSetupController;
+use App\Http\Controllers\WebhookController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -11,6 +12,15 @@ use Illuminate\Support\Facades\Route;
 | API Routes — RuangASN v1
 |--------------------------------------------------------------------------
 */
+
+// --- Incoming webhooks (machine-to-machine; unauthenticated, signature-verified) ---
+// Lives under the api middleware group so CSRF is NOT applied (stateless).
+// Throttled: each request does DB reads + a webhook_events insert, so an
+// unauthenticated attacker must not be able to flood the endpoint. 60 req/min/IP.
+Route::middleware('throttle:60,1')->group(function () {
+    Route::get('/webhooks/whatsapp', [WebhookController::class, 'whatsappVerify'])->name('webhooks.whatsapp.verify');
+    Route::post('/webhooks/{provider}', [WebhookController::class, 'handle'])->name('webhooks.handle');
+});
 
 Route::prefix('v1')->group(function () {
 

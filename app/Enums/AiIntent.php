@@ -13,5 +13,7 @@ enum AiIntent: string
     case SUMMARIZE_MEETING = 'summarize_meeting';
     case KNOWLEDGE_QA      = 'knowledge_qa';
     case PERFORMANCE_QUERY = 'performance_query';
+    case EXECUTIVE_BRIEF   = 'executive_brief';
+    case WORKLOAD_QUERY    = 'workload_query';
     case GENERAL_CHAT      = 'general_chat';
 }

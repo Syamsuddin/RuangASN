@@ -5,8 +5,8 @@ use App\Enums\AiAgentType;
 
 /**
  * Resolves the specialised AiAgent for a given AiAgentType. Agent types without
- * a dedicated implementation (document/executive/workload) fall back to the
- * GeneralAgent so the orchestrator always has a usable agent.
+ * a dedicated implementation (document) fall back to the GeneralAgent so the
+ * orchestrator always has a usable agent.
  */
 class AgentRegistry
 {
@@ -16,6 +16,8 @@ class AgentRegistry
         private ReportAgent $report,
         private KnowledgeAgent $knowledge,
         private PerformanceAgent $performance,
+        private ExecutiveAgent $executive,
+        private WorkloadAgent $workload,
         private GeneralAgent $general,
     ) {}
 
@@ -27,6 +29,8 @@ class AgentRegistry
             AiAgentType::REPORT      => $this->report,
             AiAgentType::KNOWLEDGE   => $this->knowledge,
             AiAgentType::PERFORMANCE => $this->performance,
+            AiAgentType::EXECUTIVE   => $this->executive,
+            AiAgentType::WORKLOAD    => $this->workload,
             default                  => $this->general,
         };
     }

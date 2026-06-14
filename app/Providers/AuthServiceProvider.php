@@ -3,19 +3,23 @@ namespace App\Providers;
 
 use App\Models\AiConversation;
 use App\Models\CalendarEvent;
+use App\Models\ChatChannel;
 use App\Models\Document;
 use App\Models\KnowledgeArticle;
 use App\Models\Meeting;
 use App\Models\Organization;
+use App\Models\Project;
 use App\Models\Report;
 use App\Models\SkpPlan;
 use App\Models\Task;
 use App\Policies\AiConversationPolicy;
 use App\Policies\CalendarEventPolicy;
+use App\Policies\ChatChannelPolicy;
 use App\Policies\DocumentPolicy;
 use App\Policies\KnowledgeArticlePolicy;
 use App\Policies\MeetingPolicy;
 use App\Policies\OrganizationPolicy;
+use App\Policies\ProjectPolicy;
 use App\Policies\ReportPolicy;
 use App\Policies\SkpPlanPolicy;
 use App\Policies\TaskPolicy;
@@ -29,7 +33,9 @@ class AuthServiceProvider extends ServiceProvider
         Meeting::class          => MeetingPolicy::class,
         Document::class         => DocumentPolicy::class,
         CalendarEvent::class    => CalendarEventPolicy::class,
+        ChatChannel::class      => ChatChannelPolicy::class,
         Report::class           => ReportPolicy::class,
+        Project::class          => ProjectPolicy::class,
         KnowledgeArticle::class => KnowledgeArticlePolicy::class,
         SkpPlan::class          => SkpPlanPolicy::class,
         AiConversation::class   => AiConversationPolicy::class,

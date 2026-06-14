@@ -6,7 +6,7 @@ import { useTheme } from '@/composables/useTheme';
 import {
     Sparkles, Database, Mic, HardDrive, Mail, Radio, Video,
     MessageCircle, Landmark, Archive, KeyRound, Plug,
-    CheckCircle, Eye, EyeOff, ShieldCheck, Info, Save, Clock,
+    CheckCircle, Eye, EyeOff, ShieldCheck, Info, Save, Clock, Activity,
 } from 'lucide-vue-next';
 
 interface Field {
@@ -126,16 +126,23 @@ const fieldError = (key: string) => errors.value[`fields.${key}`] as string | un
 
 <template>
     <AppLayout>
-        <div class="mb-6">
-            <div class="flex items-center gap-2 text-xs mb-1" style="color: var(--text-muted);">
-                <Plug :size="13" /> Administrasi / Integrasi
+        <div class="mb-6 flex items-start justify-between gap-4">
+            <div>
+                <div class="flex items-center gap-2 text-xs mb-1" style="color: var(--text-muted);">
+                    <Plug :size="13" /> Administrasi / Integrasi
+                </div>
+                <h1 class="text-xl font-semibold" style="color: var(--text-primary);">Integrasi Eksternal</h1>
+                <p class="text-sm mt-0.5" style="color: var(--text-muted);">
+                    Kredensial &amp; konfigurasi layanan eksternal untuk
+                    <span class="font-medium" style="color: var(--text-secondary);">{{ organizationName }}</span>.
+                    Nilai rahasia disimpan terenkripsi dan tidak pernah ditampilkan kembali.
+                </p>
             </div>
-            <h1 class="text-xl font-semibold" style="color: var(--text-primary);">Integrasi Eksternal</h1>
-            <p class="text-sm mt-0.5" style="color: var(--text-muted);">
-                Kredensial &amp; konfigurasi layanan eksternal untuk
-                <span class="font-medium" style="color: var(--text-secondary);">{{ organizationName }}</span>.
-                Nilai rahasia disimpan terenkripsi dan tidak pernah ditampilkan kembali.
-            </p>
+            <a href="/admin/integrations/monitor"
+                class="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border transition"
+                style="border-color: var(--border-color); color: var(--text-secondary);">
+                <Activity :size="15" /> Monitor
+            </a>
         </div>
 
         <div

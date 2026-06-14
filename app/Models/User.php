@@ -148,6 +148,7 @@ class User extends Authenticatable
             'in_app'            => true,
             'email'             => false,
             'push'              => false,
+            'whatsapp'          => false,
             'task_assigned'     => true,
             'task_due'          => true,
             'meeting_invited'   => true,

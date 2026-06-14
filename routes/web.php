@@ -3,15 +3,18 @@
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\AiController;
 use App\Http\Controllers\CalendarController;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\KnowledgeController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\ExecutiveController;
 use App\Http\Controllers\MeetingController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PerformanceController;
+use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\SearchController;
@@ -128,6 +131,27 @@ Route::middleware('auth')->group(function () {
         Route::post('/{report}/ai-draft',      [ReportController::class, 'generateAiDraft'])->name('ai_draft');
     });
 
+    // ── Project Workspace (Inertia web) ──
+    Route::prefix('projects')->name('projects.')->group(function () {
+        Route::get('/',                                  [ProjectController::class, 'index'])->name('index');
+        Route::post('/',                                 [ProjectController::class, 'store'])->name('store');
+        // Static milestone/risk routes before the /{project} wildcard.
+        Route::patch('/milestones/{milestone}',          [ProjectController::class, 'updateMilestone'])->name('milestones.update');
+        Route::post('/milestones/{milestone}/complete',  [ProjectController::class, 'completeMilestone'])->name('milestones.complete');
+        Route::delete('/milestones/{milestone}',         [ProjectController::class, 'deleteMilestone'])->name('milestones.destroy');
+        Route::patch('/risks/{risk}',                    [ProjectController::class, 'updateRisk'])->name('risks.update');
+        Route::post('/risks/{risk}/close',               [ProjectController::class, 'closeRisk'])->name('risks.close');
+        Route::get('/{project}',                         [ProjectController::class, 'show'])->name('show');
+        Route::patch('/{project}',                       [ProjectController::class, 'update'])->name('update');
+        Route::delete('/{project}',                      [ProjectController::class, 'destroy'])->name('destroy');
+        Route::post('/{project}/transition',             [ProjectController::class, 'transition'])->name('transition');
+        Route::post('/{project}/close',                  [ProjectController::class, 'close'])->name('close');
+        Route::post('/{project}/members',                [ProjectController::class, 'addMember'])->name('members.add');
+        Route::delete('/{project}/members/{member}',     [ProjectController::class, 'removeMember'])->name('members.remove');
+        Route::post('/{project}/milestones',             [ProjectController::class, 'addMilestone'])->name('milestones.add');
+        Route::post('/{project}/risks',                  [ProjectController::class, 'addRisk'])->name('risks.add');
+    });
+
     // ── Knowledge Base (Inertia web) ──
     Route::prefix('knowledge')->name('knowledge.')->group(function () {
         Route::get('/', [KnowledgeController::class, 'index'])->name('index');
@@ -165,6 +189,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/indicators/{indicator}/realizations', [PerformanceController::class, 'addRealization'])->name('realizations.store');
     });
 
+    // ── Executive Dashboard (Bupati / Kepala OPD; analytics.view.opd/pemda) ──
+    Route::get('/executive', [ExecutiveController::class, 'index'])->name('executive.index');
+    Route::post('/executive/ai-brief', [ExecutiveController::class, 'aiBrief'])->name('executive.ai_brief');
+
     // ── Admin ──
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/users', [Admin\UserController::class, 'index'])->name('users.index');
@@ -192,6 +220,9 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/integrations', [Admin\IntegrationController::class, 'index'])->name('integrations.index');
         Route::patch('/integrations', [Admin\IntegrationController::class, 'update'])->name('integrations.update');
+        Route::get('/integrations/monitor', [Admin\IntegrationMonitorController::class, 'monitor'])->name('integrations.monitor');
+        Route::post('/integrations/run', [Admin\IntegrationMonitorController::class, 'run'])->name('integrations.run');
+        Route::post('/integrations/test', [Admin\IntegrationMonitorController::class, 'testConnection'])->name('integrations.test');
     });
 
     // ── Search ──
@@ -218,5 +249,22 @@ Route::middleware('auth')->group(function () {
         Route::post('/messages/{message}/reject',  [AiController::class, 'rejectAction'])->name('reject');
         Route::get('/memories',                    [AiController::class, 'memories'])->name('memories');
         Route::patch('/memories/{memory}',         [AiController::class, 'updateMemory'])->name('memories.update');
+    });
+
+    // ── Chat (DM + channels, realtime via Reverb) ──
+    Route::prefix('chat')->name('chat.')->group(function () {
+        Route::get('/',                                       [ChatController::class, 'index'])->name('index');
+        Route::post('/channels',                              [ChatController::class, 'storeChannel'])->name('channels.store');
+        Route::post('/dm',                                    [ChatController::class, 'startDm'])->name('dm.start');
+        Route::get('/channels/{channel}',                     [ChatController::class, 'show'])->name('show');
+        Route::get('/channels/{channel}/messages',            [ChatController::class, 'messages'])->name('messages');
+        Route::post('/channels/{channel}/messages',           [ChatController::class, 'sendMessage'])->name('messages.store');
+        Route::post('/channels/{channel}/read',               [ChatController::class, 'markRead'])->name('read');
+        Route::post('/channels/{channel}/members',            [ChatController::class, 'addMember'])->name('members.add');
+        Route::delete('/channels/{channel}/members/{member}', [ChatController::class, 'removeMember'])->name('members.remove');
+        Route::post('/channels/{channel}/archive',            [ChatController::class, 'archive'])->name('archive');
+        Route::patch('/messages/{message}',                   [ChatController::class, 'editMessage'])->name('messages.update');
+        Route::delete('/messages/{message}',                  [ChatController::class, 'deleteMessage'])->name('messages.destroy');
+        Route::post('/messages/{message}/react',              [ChatController::class, 'react'])->name('messages.react');
     });
 });

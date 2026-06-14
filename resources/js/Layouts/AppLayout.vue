@@ -11,6 +11,7 @@ import {
     Sparkles, Settings, HelpCircle, Bell, Search, Sun, Moon,
     ChevronLeft, ChevronRight, LogOut, User, Building2, Circle,
     Shield, UserCog, Network, UsersRound, GitBranch, ClipboardList, Plug,
+    FolderKanban, Gauge,
 } from 'lucide-vue-next';
 
 const page = usePage();
@@ -96,40 +97,56 @@ onUnmounted(() => {
     document.removeEventListener('keydown', handleGlobalKey);
 });
 
-const navGroups = [
-    {
-        label: 'OVERVIEW',
-        items: [
-            { name: 'Dashboard',    href: '/dashboard',    icon: LayoutDashboard },
-            { name: 'Kalender',     href: '/calendar',     icon: Calendar },
-            { name: 'Struktur Org', href: '/organization', icon: Building2 },
-        ],
-    },
-    {
-        label: 'WORKSPACE SAYA',
-        items: [
-            { name: 'Personal Workspace', href: '/workspace',   icon: BriefcaseBusiness },
-            { name: 'Tasks Saya',         href: '/tasks',        icon: CheckSquare, badgeKey: 'overdueCount' },
-            { name: 'Laporan',            href: '/reports',      icon: FileText },
-            { name: 'Kinerja / SKP',      href: '/performance',  icon: BarChart3 },
-        ],
-    },
-    {
-        label: 'TIM & KOLABORASI',
-        items: [
-            { name: 'Tim Saya', href: '/teams',    icon: Users },
-            { name: 'Meeting',  href: '/meetings', icon: Video },
-            { name: 'Chat',     href: '/chat',     icon: MessageSquare },
-        ],
-    },
-    {
-        label: 'SUMBER DAYA',
-        items: [
-            { name: 'Dokumen',       href: '/documents', icon: FolderOpen },
-            { name: 'Knowledge',     href: '/knowledge', icon: FileText },
-        ],
-    },
-];
+// Executive dashboard is gated by analytics.view.opd OR analytics.view.pemda
+// (Bupati / Kepala OPD / admin_pemda scope).
+const canExecutive = computed(() =>
+    hasPermission('analytics.view.opd') || hasPermission('analytics.view.pemda')
+);
+
+// Items may carry an optional `show` predicate; groups with no visible items are
+// dropped so a gated nav entry never leaves an empty section header.
+const navGroups = computed(() => {
+    const groups = [
+        {
+            label: 'OVERVIEW',
+            items: [
+                { name: 'Dashboard',    href: '/dashboard',    icon: LayoutDashboard },
+                { name: 'Eksekutif',    href: '/executive',    icon: Gauge, show: canExecutive.value },
+                { name: 'Kalender',     href: '/calendar',     icon: Calendar },
+                { name: 'Struktur Org', href: '/organization', icon: Building2 },
+            ],
+        },
+        {
+            label: 'WORKSPACE SAYA',
+            items: [
+                { name: 'Personal Workspace', href: '/workspace',   icon: BriefcaseBusiness },
+                { name: 'Tasks Saya',         href: '/tasks',        icon: CheckSquare, badgeKey: 'overdueCount' },
+                { name: 'Laporan',            href: '/reports',      icon: FileText },
+                { name: 'Kinerja / SKP',      href: '/performance',  icon: BarChart3 },
+            ],
+        },
+        {
+            label: 'TIM & KOLABORASI',
+            items: [
+                { name: 'Tim Saya', href: '/teams',    icon: Users },
+                { name: 'Proyek',   href: '/projects', icon: FolderKanban },
+                { name: 'Meeting',  href: '/meetings', icon: Video },
+                { name: 'Chat',     href: '/chat',     icon: MessageSquare },
+            ],
+        },
+        {
+            label: 'SUMBER DAYA',
+            items: [
+                { name: 'Dokumen',       href: '/documents', icon: FolderOpen },
+                { name: 'Knowledge',     href: '/knowledge', icon: FileText },
+            ],
+        },
+    ];
+
+    return groups
+        .map((g) => ({ ...g, items: g.items.filter((i: any) => i.show !== false) }))
+        .filter((g) => g.items.length > 0);
+});
 
 const adminNavItems = computed(() => [
     { name: 'Pengguna',            href: '/admin/users',          icon: UserCog,       perm: 'admin.users.view' },

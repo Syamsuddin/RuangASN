@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { Bell, Mail, Smartphone, CheckSquare, CalendarDays, FileText, BarChart2, Save } from 'lucide-vue-next';
+import { Bell, Mail, Smartphone, MessageCircle, CheckSquare, CalendarDays, FileText, BarChart2, Save } from 'lucide-vue-next';
 
 interface NotificationPreference {
     in_app: boolean;
     email: boolean;
     push: boolean;
+    whatsapp: boolean;
     task_assigned: boolean;
     task_due: boolean;
     meeting_invited: boolean;
@@ -48,13 +49,14 @@ const toggle = (key: keyof NotificationPreference) => {
             <section class="rounded-lg border p-5 space-y-4" style="background: var(--card-bg); border-color: var(--border-color);">
                 <h2 class="text-sm font-semibold" style="color: var(--text-primary);">Saluran Pengiriman</h2>
 
-                <div v-for="(label, key, icon) in { in_app: 'Notifikasi dalam aplikasi', email: 'Email', push: 'Push notification' }" :key="key"
+                <div v-for="(label, key, icon) in { in_app: 'Notifikasi dalam aplikasi', email: 'Email', push: 'Push notification', whatsapp: 'WhatsApp' }" :key="key"
                     class="flex items-center justify-between py-2 border-b last:border-0"
                     :style="{ borderColor: 'var(--border-color)' }"
                 >
                     <div class="flex items-center gap-3">
                         <Bell v-if="key === 'in_app'" :size="16" style="color: var(--text-muted);" />
                         <Mail v-else-if="key === 'email'" :size="16" style="color: var(--text-muted);" />
+                        <MessageCircle v-else-if="key === 'whatsapp'" :size="16" style="color: var(--text-muted);" />
                         <Smartphone v-else :size="16" style="color: var(--text-muted);" />
                         <span class="text-sm" style="color: var(--text-primary);">{{ label }}</span>
                     </div>
