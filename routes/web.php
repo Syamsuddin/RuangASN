@@ -189,6 +189,9 @@ Route::middleware('auth')->group(function () {
         Route::patch('/delegations/{delegation}/revoke', [Admin\DelegationController::class, 'revoke'])->name('delegations.revoke');
 
         Route::get('/audit', [Admin\AuditController::class, 'index'])->name('audit.index');
+
+        Route::get('/integrations', [Admin\IntegrationController::class, 'index'])->name('integrations.index');
+        Route::patch('/integrations', [Admin\IntegrationController::class, 'update'])->name('integrations.update');
     });
 
     // ── Search ──

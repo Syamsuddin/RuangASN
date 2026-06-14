@@ -10,7 +10,7 @@ import {
     Users, Video, FolderOpen, FileText, BarChart3, MessageSquare,
     Sparkles, Settings, HelpCircle, Bell, Search, Sun, Moon,
     ChevronLeft, ChevronRight, LogOut, User, Building2, Circle,
-    Shield, UserCog, Network, UsersRound, GitBranch, ClipboardList,
+    Shield, UserCog, Network, UsersRound, GitBranch, ClipboardList, Plug,
 } from 'lucide-vue-next';
 
 const page = usePage();
@@ -137,6 +137,7 @@ const adminNavItems = computed(() => [
     { name: 'Tim',                 href: '/admin/teams',          icon: UsersRound,    perm: 'admin.units.manage' },
     { name: 'Delegasi',            href: '/admin/delegations',    icon: GitBranch,     perm: 'organization.delegation.view' },
     { name: 'Audit Log',           href: '/admin/audit',          icon: ClipboardList, perm: 'audit.view.own' },
+    { name: 'Integrasi',           href: '/admin/integrations',   icon: Plug,          perm: 'admin.integrations.view' },
 ].filter(item => hasPermission(item.perm)));
 
 const overdueCount = computed(() => (page.props as any).taskStats?.overdue ?? 0);

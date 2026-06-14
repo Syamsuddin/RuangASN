@@ -43,6 +43,26 @@ return [
             'model'    => env('OPENAI_MODEL', 'gpt-4o'),
             'base_uri' => env('OPENAI_BASE_URI', 'https://api.openai.com'),
         ],
+        'qwen' => [
+            'api_key'  => env('QWEN_API_KEY'),
+            'model'    => env('QWEN_MODEL', 'qwen2.5-72b-instruct'),
+            'base_uri' => env('QWEN_BASE_URI', 'https://dashscope.aliyuncs.com'),
+        ],
+        'deepseek' => [
+            'api_key'  => env('DEEPSEEK_API_KEY'),
+            'model'    => env('DEEPSEEK_MODEL', 'deepseek-chat'),
+            'base_uri' => env('DEEPSEEK_BASE_URI', 'https://api.deepseek.com'),
+        ],
+        'llama' => [
+            'api_key'  => env('LLAMA_API_KEY'),
+            'model'    => env('LLAMA_MODEL', 'llama3.1'),
+            'base_uri' => env('LLAMA_BASE_URI', 'http://127.0.0.1:11434'),
+        ],
+        'mistral' => [
+            'api_key'  => env('MISTRAL_API_KEY'),
+            'model'    => env('MISTRAL_MODEL', 'mistral-large-latest'),
+            'base_uri' => env('MISTRAL_BASE_URI', 'https://api.mistral.ai'),
+        ],
         'fake' => [],
     ],
 
@@ -55,6 +75,8 @@ return [
     */
     'embedding' => [
         'provider'   => env('AI_EMBEDDING', 'fake'),
+        'model'      => env('AI_EMBEDDING_MODEL'),
+        'api_key'    => env('AI_EMBEDDING_API_KEY'),
         'dimensions' => (int) env('AI_EMBEDDING_DIMENSIONS', 64),
     ],
 
@@ -66,6 +88,20 @@ return [
     | dev path). 'qdrant' is a config-gated stub for production.
     */
     'vector_store' => env('AI_VECTOR_STORE', 'database'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Vector Store Connection (Qdrant)
+    |--------------------------------------------------------------------------
+    | Connection details for the external vector DB. Used when vector_store is
+    | 'qdrant'. Env-driven so config fallback is complete; the DB-backed
+    | IntegrationSettings UI can override per-organization.
+    */
+    'vector' => [
+        'host'       => env('QDRANT_HOST', 'http://127.0.0.1:6333'),
+        'api_key'    => env('QDRANT_API_KEY'),
+        'collection' => env('QDRANT_COLLECTION', 'ruangasn'),
+    ],
 
     /*
     |--------------------------------------------------------------------------

@@ -50,6 +50,8 @@ use Spatie\Permission\Traits\HasRoles;
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \App\Models\Organization|null $organization
+ * @property-read \App\Models\Organization|null $pemda
  */
 class User extends Authenticatable
 {

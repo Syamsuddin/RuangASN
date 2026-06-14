@@ -58,6 +58,8 @@ class RbacSeeder extends Seeder
             'performance.skp.approve', 'performance.feedback.add', 'performance.analytics.view',
             // AI Foundation (Phase 3)
             'ai.query', 'ai.conversation.view.own', 'ai.settings.manage', 'ai.model.select',
+            // External Integration Settings (pemda/OPD-admin level)
+            'admin.integrations.view', 'admin.integrations.manage',
         ];
 
         foreach ($permissions as $perm) {
@@ -99,6 +101,7 @@ class RbacSeeder extends Seeder
             'performance.skp.create', 'performance.skp.submit', 'performance.skp.review',
             'performance.skp.approve', 'performance.feedback.add', 'performance.analytics.view',
             'ai.query', 'ai.conversation.view.own', 'ai.settings.manage', 'ai.model.select',
+            'admin.integrations.view', 'admin.integrations.manage',
         ]);
 
         $kepalaOpd = Role::firstOrCreate(['name' => 'kepala_opd', 'guard_name' => 'web']);
