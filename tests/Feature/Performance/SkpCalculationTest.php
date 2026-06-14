@@ -289,6 +289,16 @@ class SkpCalculationTest extends TestCase
         $this->assertEqualsWithDelta(100.0, $this->svc->behaviorScore($eval), 0.001);
     }
 
+    public function test_behavior_score_all_null_throws(): void
+    {
+        // O3: all dimensions null → must fail loudly (returning 0.0 would
+        // silently deflate final_score), not return a misleading score.
+        $eval = $this->makeEvaluation(null, null, null, null, null);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->svc->behaviorScore($eval);
+    }
+
     // ── 4. finalScore ─────────────────────────────────────────────────────
 
     public function test_final_score_formula(): void

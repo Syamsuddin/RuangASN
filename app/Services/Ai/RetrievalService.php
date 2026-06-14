@@ -34,10 +34,12 @@ class RetrievalService
 
         // SearchService matches the whole query as one term (substring on
         // SQLite / plainto_tsquery on PostgreSQL). To approximate term-based
-        // retrieval consistently, query the full phrase AND each significant
-        // token, then merge + dedupe by source_id. All candidates still come
-        // ONLY from SearchService → tenant + permission scoped (AXIOM-08).
-        $queries = array_merge([$query], $this->significantTerms($query));
+        // retrieval consistently, query the full phrase AND a bounded set of the
+        // most significant tokens, then merge + dedupe by source_id. Bounding
+        // the term fan-out (top 3) caps the per-call query count (P2). All
+        // candidates still come ONLY from SearchService → tenant + permission
+        // scoped (AXIOM-08).
+        $queries = array_merge([$query], $this->significantTerms($query, 3));
 
         $citations = [];
         $seen      = [];
@@ -68,16 +70,22 @@ class RetrievalService
             return [];
         }
 
-        return $this->rankByEmbedding($query, $citations, $k);
+        // Cap the deduped candidate pool BEFORE the per-candidate embedding pass
+        // so rankByEmbedding() never embeds an unbounded set (P2). The full
+        // phrase + most-significant terms keep the relevant items near the front.
+        $candidates = array_slice($citations, 0, max($k * 4, 20));
+
+        return $this->rankByEmbedding($query, $candidates, $k);
     }
 
     /**
      * Extract significant tokens (drops short words + common Indonesian
      * question/stop words) so retrieval works on substring-only drivers.
+     * Returns at most $limit terms, longest first (most discriminating).
      *
      * @return array<int, string>
      */
-    private function significantTerms(string $query): array
+    private function significantTerms(string $query, int $limit = 3): array
     {
         $stop = [
             'apa', 'itu', 'cara', 'bagaimana', 'yang', 'untuk', 'dari', 'dan',
@@ -95,7 +103,11 @@ class RetrievalService
             $terms[$clean] = $token; // preserve original casing for matching
         }
 
-        return array_values($terms);
+        // Keep only the most significant (longest) terms to bound the query
+        // fan-out (P2). Longer tokens are more discriminating / less common.
+        uasort($terms, static fn ($a, $b) => mb_strlen($b) <=> mb_strlen($a));
+
+        return array_values(array_slice($terms, 0, max(0, $limit)));
     }
 
     /**

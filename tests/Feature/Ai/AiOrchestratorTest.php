@@ -6,12 +6,16 @@ use App\Enums\AiAgentType;
 use App\Enums\AiInteractionType;
 use App\Enums\AiIntent;
 use App\Models\AiConversation;
+use App\Models\AiMessage;
+use App\Services\Ai\AiOrchestratorService;
 use App\Services\Ai\AiProviderException;
 use App\Services\Ai\AiProviderManager;
+use App\Services\Ai\AiResult;
 use App\Services\Ai\Contracts\AiProvider;
 use App\Services\Ai\IntentClassifier;
 use App\Services\Ai\Providers\FakeAiProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 
 class AiOrchestratorTest extends AiTestCase
 {
@@ -63,8 +67,6 @@ class AiOrchestratorTest extends AiTestCase
     {
         // A stub provider that is "available" but always throws, placed before
         // 'fake' in the fallback order → manager must fall through to fake.
-        config()->set('ai.fallback_order', ['boom', 'fake']);
-
         $boom = new class implements AiProvider {
             public function name(): string
             {
@@ -84,7 +86,7 @@ class AiOrchestratorTest extends AiTestCase
 
         $this->app->instance(
             AiProviderManager::class,
-            new AiProviderManager([$boom, new FakeAiProvider()])
+            new AiProviderManager([$boom, new FakeAiProvider()], ['boom', 'fake'])
         );
 
         $manager  = $this->app->make(AiProviderManager::class);
@@ -108,6 +110,90 @@ class AiOrchestratorTest extends AiTestCase
             'interaction'     => AiInteractionType::RESPONSE_GENERATED->value,
             'status'          => 'completed',
         ]);
+    }
+
+    // ── P1: conversation history is capped ──────────────────────────────────
+
+    public function test_history_forwarded_to_provider_is_capped(): void
+    {
+        // Cap the forwarded history low so the test is small + fast.
+        config()->set('ai.history.max_messages', 4);
+
+        // A capturing provider records the messages array it receives.
+        $captured = [];
+        $capturing = new class($captured) implements AiProvider {
+            /** @param array<int, array<int, array{role: string, content: string}>> $sink */
+            public function __construct(public array &$sink) {}
+
+            public function name(): string
+            {
+                return 'capturing';
+            }
+
+            public function isAvailable(): bool
+            {
+                return true;
+            }
+
+            public function chat(array $messages, array $options = []): AiResult
+            {
+                $this->sink[] = $messages;
+
+                return new AiResult(
+                    content: 'ok',
+                    promptTokens: 1,
+                    completionTokens: 1,
+                    modelName: 'capturing-v1',
+                    finishReason: 'stop',
+                    proposedActions: [],
+                    citations: [],
+                );
+            }
+        };
+
+        $this->app->instance(
+            AiProviderManager::class,
+            new AiProviderManager([$capturing, new FakeAiProvider()], ['capturing', 'fake'])
+        );
+
+        // Seed a conversation that already has 10 prior messages (> the cap of 4).
+        $conversation = AiConversation::create([
+            'organization_id' => $this->org->id,
+            'user_id'         => $this->asn->id,
+            'agent_type'      => AiAgentType::GENERAL->value,
+            'title'           => 'Riwayat panjang',
+        ]);
+        for ($i = 0; $i < 10; $i++) {
+            // Stamp distinct PAST timestamps (oldest first) at creation time so
+            // the message the orchestrator inserts next (real now()) is genuinely
+            // the newest. (AiMessage::$timestamps is false; the creating hook
+            // only sets created_at when empty, so we provide it explicitly.)
+            AiMessage::create([
+                'id'                  => (string) Str::ulid(),
+                'conversation_id'     => $conversation->id,
+                'role'                => $i % 2 === 0 ? 'user' : 'assistant',
+                'content'             => "pesan lama nomor {$i}",
+                'data_classification' => 3,
+                'created_at'          => now()->subMinutes(20 - $i),
+            ]);
+        }
+
+        $orchestrator = $this->app->make(AiOrchestratorService::class);
+        $orchestrator->sendMessage($this->asn, $conversation, 'pesan baru sekarang');
+
+        $this->assertNotEmpty($captured, 'Provider should have been called.');
+        $forwarded = $captured[0];
+
+        // Count only the role:user/assistant turns (system prompts are extra).
+        $historyTurns = array_values(array_filter(
+            $forwarded,
+            static fn ($m) => in_array($m['role'], ['user', 'assistant'], true)
+        ));
+
+        // Cap is 4: exactly the 4 most recent turns are forwarded, NOT all 11.
+        $this->assertCount(4, $historyTurns);
+        // The just-sent message is the newest and must be present.
+        $this->assertSame('pesan baru sekarang', end($historyTurns)['content']);
     }
 
     // ── 7. Tenant isolation ─────────────────────────────────────────────────
@@ -161,6 +247,20 @@ class AiOrchestratorTest extends AiTestCase
             AiIntent::GENERAL_CHAT,
             $classifier->classify('selamat pagi')['intent']
         );
+    }
+
+    // ── L2: mixed-domain query routes to the most-specific (PERFORMANCE) ─────
+
+    public function test_intent_classifier_prefers_performance_over_meeting(): void
+    {
+        $classifier = new IntentClassifier();
+
+        // "capaian SKP dari rapat kemarin" mentions both SKP and rapat; the
+        // highly-specific PERFORMANCE keywords must win over the generic meeting
+        // branch (L2).
+        $result = $classifier->classify('bagaimana capaian SKP saya dari rapat kemarin');
+        $this->assertSame(AiIntent::PERFORMANCE_QUERY, $result['intent']);
+        $this->assertSame(AiAgentType::PERFORMANCE, $result['agent']);
     }
 
     // ── ai.query gate ───────────────────────────────────────────────────────

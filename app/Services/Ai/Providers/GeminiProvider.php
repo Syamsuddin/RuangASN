@@ -49,16 +49,19 @@ class GeminiProvider extends HttpAiProvider
         }
 
         try {
+            // Send the API key via header (NOT the URL query string) so it can
+            // never leak into Guzzle exception messages / logs (H1).
             $response = Http::timeout(30)
+                ->withHeaders(['x-goog-api-key' => $apiKey])
                 ->asJson()
                 ->post(
-                    $this->baseUri() . "/v1beta/models/{$model}:generateContent?key={$apiKey}",
+                    $this->baseUri() . "/v1beta/models/{$model}:generateContent",
                     $payload
                 );
 
             if ($response->failed()) {
                 throw new AiProviderException(
-                    "gemini: HTTP {$response->status()} - " . $response->body()
+                    'gemini: HTTP ' . $response->status() . ' - ' . $this->safeBody($response->body())
                 );
             }
 
@@ -66,7 +69,7 @@ class GeminiProvider extends HttpAiProvider
         } catch (AiProviderException $e) {
             throw $e;
         } catch (Throwable $e) {
-            throw new AiProviderException('gemini: ' . $e->getMessage(), 0, $e);
+            throw new AiProviderException('gemini: ' . self::redact($e->getMessage()), 0, $e);
         }
 
         $text = $body['candidates'][0]['content']['parts'][0]['text'] ?? '';

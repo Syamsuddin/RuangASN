@@ -271,9 +271,11 @@ class PerformanceController extends Controller
             auth()->user()
         );
 
-        // Transition to evaluating if still active
-        if ($plan->fresh()->status === PerformanceStatus::ACTIVE) {
-            $this->skpService->transition($plan->fresh(), PerformanceStatus::EVALUATING, auth()->user());
+        // Transition to evaluating if still active. Refresh once (the evaluate
+        // call above may have changed state) then reuse the same instance.
+        $plan->refresh();
+        if ($plan->status === PerformanceStatus::ACTIVE) {
+            $this->skpService->transition($plan, PerformanceStatus::EVALUATING, auth()->user());
         }
 
         return back()->with('success', 'Evaluasi SKP berhasil disimpan.');
@@ -299,7 +301,8 @@ class PerformanceController extends Controller
             abort(403);
         }
 
-        $plans = SkpPlan::with(['user:id,name', 'evaluation', 'indicators'])
+        $plans = SkpPlan::with(['user:id,name', 'evaluation'])
+            ->withCount('indicators')
             ->when(
                 ! $user->hasPermissionTo('performance.view.all'),
                 fn ($q) => $q->where('organization_id', $user->organization_id)
@@ -319,7 +322,7 @@ class PerformanceController extends Controller
             'status'           => $p->status?->value,
             'final_score'      => $p->evaluation?->final_score !== null ? (float) $p->evaluation->final_score : null,
             'predicate'        => $p->evaluation?->predicate?->value,
-            'indicators_count' => $p->indicators->count(),
+            'indicators_count' => $p->indicators_count,
         ]);
 
         return Inertia::render('Performance/Analytics', [

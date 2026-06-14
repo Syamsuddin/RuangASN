@@ -382,8 +382,21 @@ class AiOrchestratorService
             ];
         }
 
+        // Cap the forwarded history to the most recent N messages so token cost
+        // does not grow O(N²) over a long conversation (P1). Fetch the newest N
+        // (DESC), then reverse to restore chronological order.
+        $max = max(1, (int) config('ai.history.max_messages', 20));
+
+        // NOTE: the messages() relation carries a default orderBy('created_at')
+        // ASC; reorder() clears it so the newest-N window (DESC + limit) is not
+        // overridden by the inherited ASC ordering.
         /** @var \Illuminate\Database\Eloquent\Collection<int, AiMessage> $history */
-        $history = $conversation->messages()->orderBy('created_at')->get();
+        $history = $conversation->messages()
+            ->reorder()
+            ->orderByDesc('created_at')
+            ->limit($max)
+            ->get()
+            ->reverse();
         foreach ($history as $m) {
             if (! in_array($m->role, ['user', 'assistant'], true)) {
                 continue;

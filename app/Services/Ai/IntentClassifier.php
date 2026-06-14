@@ -18,6 +18,14 @@ class IntentClassifier
     {
         $q = ' ' . mb_strtolower(trim($query)) . ' ';
 
+        // ── Performance / SKP (checked FIRST: these keywords are highly
+        //    specific, so a mixed-domain query like "capaian SKP dari rapat
+        //    kemarin" routes to PERFORMANCE rather than the generic meeting
+        //    branch) — L2. ────────────────────────────────────────────────────
+        if ($this->matches($q, ['skp', 'kinerja', 'predikat', 'realisasi', 'capaian', 'indikator'])) {
+            return ['intent' => AiIntent::PERFORMANCE_QUERY, 'agent' => AiAgentType::PERFORMANCE];
+        }
+
         // ── Summarize/notulen meeting (before generic "rapat") ──────────────
         if ($this->matches($q, ['notulen', 'ringkas rapat', 'rangkum rapat', 'rangkum', 'ringkasan rapat'])) {
             return ['intent' => AiIntent::SUMMARIZE_MEETING, 'agent' => AiAgentType::MEETING];
@@ -37,11 +45,6 @@ class IntentClassifier
         // ── Report draft ────────────────────────────────────────────────────
         if ($this->matches($q, ['buat laporan', 'buatkan laporan', 'draft laporan', 'generate laporan', 'laporan'])) {
             return ['intent' => AiIntent::GENERATE_REPORT, 'agent' => AiAgentType::REPORT];
-        }
-
-        // ── Performance / SKP ───────────────────────────────────────────────
-        if ($this->matches($q, ['skp', 'kinerja', 'capaian', 'realisasi indikator', 'predikat'])) {
-            return ['intent' => AiIntent::PERFORMANCE_QUERY, 'agent' => AiAgentType::PERFORMANCE];
         }
 
         // ── Knowledge Q&A ───────────────────────────────────────────────────

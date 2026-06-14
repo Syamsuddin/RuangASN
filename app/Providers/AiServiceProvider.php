@@ -39,15 +39,16 @@ class AiServiceProvider extends ServiceProvider
         $this->app->bind(AiProviderManager::class, function (Application $app) {
             $cfg = $this->effectiveAiConfig($app);
 
-            // Overlay the effective fallback order into the config repository so
-            // AiProviderManager::chatWithFallback() (which reads config at
-            // runtime) honours the DB-configured order too.
-            config(['ai.fallback_order' => $cfg['fallback_order'] ?? config('ai.fallback_order')]);
+            // Pass the resolved (org-scoped) fallback order straight into the
+            // manager instead of mutating global config(). A global mutation
+            // would bleed one org's order into the next job under persistent
+            // workers (Octane/queue) — L1.
+            $order = (array) ($cfg['fallback_order'] ?? config('ai.fallback_order', ['fake']));
 
             $providers = $this->buildProviders((array) ($cfg['providers'] ?? []));
             $providers[] = new FakeAiProvider();
 
-            return new AiProviderManager($providers);
+            return new AiProviderManager($providers, array_values($order));
         });
 
         // Vector store binding (config-gated; DatabaseVectorStore is the path).

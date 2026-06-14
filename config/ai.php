@@ -112,4 +112,16 @@ return [
         'top_k'          => (int) env('AI_RETRIEVAL_TOP_K', 5),
         'excerpt_length' => 160,
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Conversation History
+    |--------------------------------------------------------------------------
+    | Cap on how many of the most recent messages are forwarded to the provider
+    | on each turn. Sending the ENTIRE history every call grows token cost
+    | O(N²) over a conversation; we send only the last N messages (P1).
+    */
+    'history' => [
+        'max_messages' => (int) env('AI_HISTORY_MAX', 20),
+    ],
 ];

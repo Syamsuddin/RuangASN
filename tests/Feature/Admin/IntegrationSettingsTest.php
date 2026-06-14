@@ -201,4 +201,68 @@ class IntegrationSettingsTest extends TestCase
             'auditable_type' => 'IntegrationSetting',
         ]);
     }
+
+    // P3. rows() are memoized per request, but save() invalidates the memo so a
+    // subsequent read on the same instance reflects the just-written value.
+    public function test_rows_are_memoized_and_save_invalidates_cache(): void
+    {
+        $service = app(IntegrationSettingsService::class);
+
+        // First read seeds the per-instance memo (config fallback, no DB row).
+        $this->assertNotSame(
+            'gemini',
+            $service->get($this->orgA, 'ai', 'default_provider', 'fake')
+        );
+
+        // Write through the SAME instance, then read again on it.
+        $service->save(
+            $this->orgA,
+            ['group' => 'ai', 'fields' => ['default_provider' => 'gemini']],
+            $this->adminA,
+        );
+
+        // Memo was invalidated by save() → the new value is visible.
+        $this->assertSame(
+            'gemini',
+            $service->get($this->orgA, 'ai', 'default_provider', 'fake')
+        );
+
+        // A repeated read should NOT re-query (memoized). Asserting no extra
+        // query is brittle; instead assert the value is stable across reads.
+        $this->assertSame(
+            'gemini',
+            $service->get($this->orgA, 'ai', 'default_provider', 'fake')
+        );
+    }
+
+    // L3. A corrupt/undecryptable secret returns the default AND logs a warning
+    // that carries only the coordinates — never the (corrupt) secret value.
+    public function test_decrypt_failure_returns_default_and_logs_warning(): void
+    {
+        // Store an undecryptable value in a secret row directly.
+        IntegrationSetting::create([
+            'id'              => (string) Str::ulid(),
+            'organization_id' => $this->orgA->id,
+            'group'           => 'ai',
+            'key'             => 'providers.gemini.api_key',
+            'value'           => 'not-a-valid-laravel-ciphertext',
+            'is_secret'       => true,
+            'updated_by'      => $this->adminA->id,
+        ]);
+
+        \Illuminate\Support\Facades\Log::spy();
+
+        $service = app(IntegrationSettingsService::class);
+        $result  = $service->get($this->orgA->fresh(), 'ai', 'providers.gemini.api_key', 'fallback-default');
+
+        // Falls back to the supplied default (no config fallback for this key).
+        $this->assertSame('fallback-default', $result);
+
+        \Illuminate\Support\Facades\Log::shouldHaveReceived('warning')
+            ->withArgs(function (string $message, array $context = []): bool {
+                return $message === 'integration secret decrypt failed'
+                    && ($context['group'] ?? null) === 'ai'
+                    && ($context['key'] ?? null) === 'providers.gemini.api_key';
+            });
+    }
 }

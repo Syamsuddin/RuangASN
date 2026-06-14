@@ -122,6 +122,12 @@ class SkpCalculationService
      * Compute behavior score from evaluation dimension columns.
      * Averages only non-null dimensions (leadership is optional for non-leaders).
      * All dimensions on 0-120 scale.
+     *
+     * If ALL dimensions are null there is no behavior score to compute; returning
+     * 0.0 would silently deflate final_score, so we fail loudly instead (O3). The
+     * HTTP path is unaffected — the controller requires the 4 core dimensions.
+     *
+     * @throws \InvalidArgumentException when no behavior dimension is provided.
      */
     public function behaviorScore(SkpEvaluation $eval): float
     {
@@ -134,7 +140,9 @@ class SkpCalculationService
         ], fn ($v) => $v !== null);
 
         if (count($dimensions) === 0) {
-            return 0.0;
+            throw new \InvalidArgumentException(
+                'behaviorScore membutuhkan minimal satu dimensi perilaku non-null.'
+            );
         }
 
         return round(array_sum($dimensions) / count($dimensions), 2);

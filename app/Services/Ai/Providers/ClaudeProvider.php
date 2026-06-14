@@ -62,14 +62,16 @@ class ClaudeProvider extends HttpAiProvider
                 ->post($this->baseUri() . '/v1/messages', $payload);
 
             if ($response->failed()) {
-                throw new AiProviderException("claude: HTTP {$response->status()} - " . $response->body());
+                throw new AiProviderException(
+                    'claude: HTTP ' . $response->status() . ' - ' . $this->safeBody($response->body())
+                );
             }
 
             $body = $response->json();
         } catch (AiProviderException $e) {
             throw $e;
         } catch (Throwable $e) {
-            throw new AiProviderException('claude: ' . $e->getMessage(), 0, $e);
+            throw new AiProviderException('claude: ' . self::redact($e->getMessage()), 0, $e);
         }
 
         $text  = $body['content'][0]['text'] ?? '';

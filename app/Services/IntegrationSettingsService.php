@@ -7,6 +7,7 @@ use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 /**
@@ -20,6 +21,21 @@ use Illuminate\Support\Str;
  */
 class IntegrationSettingsService
 {
+    /**
+     * Per-request memo of loaded rows, keyed by organization_id (P3). aiConfig()
+     * calls get() ~35× per resolution; without this each would re-query.
+     *
+     * @var array<string, array<string, IntegrationSetting>>
+     */
+    private array $rowsCache = [];
+
+    /**
+     * Per-request memo of the env/config fallback map (P3) — built once.
+     *
+     * @var array<string, mixed>|null
+     */
+    private ?array $configMapCache = null;
+
     public function __construct(private readonly AuditService $audit) {}
 
     /**
@@ -256,6 +272,13 @@ class IntegrationSettingsService
                 try {
                     return Crypt::decryptString($row->value);
                 } catch (\Throwable) {
+                    // Never log the secret value itself — only its coordinates.
+                    Log::warning('integration secret decrypt failed', [
+                        'group' => $group,
+                        'key'   => $key,
+                        'org'   => $org?->id,
+                    ]);
+
                     return $default;
                 }
             }
@@ -343,6 +366,10 @@ class IntegrationSettingsService
                 $org->id,
             );
         });
+
+        // Invalidate the per-request rows memo for this org so a subsequent
+        // read in the same request reflects the just-written values (P3).
+        unset($this->rowsCache[$org->id]);
     }
 
     /**
@@ -419,7 +446,9 @@ class IntegrationSettingsService
             return [];
         }
 
-        return IntegrationSetting::query()
+        // Memoize per org for the lifetime of this instance (P3). Invalidated in
+        // save() so a freshly written value is reflected on subsequent reads.
+        return $this->rowsCache[$org->id] ??= IntegrationSetting::query()
             ->withoutGlobalScope('organization')
             ->where('organization_id', $org->id)
             ->get()
@@ -444,7 +473,11 @@ class IntegrationSettingsService
      */
     private function configMap(): array
     {
-        return [
+        if ($this->configMapCache !== null) {
+            return $this->configMapCache;
+        }
+
+        return $this->configMapCache = [
             // AI
             'ai.default_provider'           => config('ai.default_provider'),
             'ai.fallback_order'             => implode(',', (array) config('ai.fallback_order', [])),

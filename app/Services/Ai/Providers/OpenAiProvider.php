@@ -52,14 +52,16 @@ class OpenAiProvider extends HttpAiProvider
                 ->post($this->baseUri() . '/v1/chat/completions', $payload);
 
             if ($response->failed()) {
-                throw new AiProviderException("openai: HTTP {$response->status()} - " . $response->body());
+                throw new AiProviderException(
+                    'openai: HTTP ' . $response->status() . ' - ' . $this->safeBody($response->body())
+                );
             }
 
             $body = $response->json();
         } catch (AiProviderException $e) {
             throw $e;
         } catch (Throwable $e) {
-            throw new AiProviderException('openai: ' . $e->getMessage(), 0, $e);
+            throw new AiProviderException('openai: ' . self::redact($e->getMessage()), 0, $e);
         }
 
         $text   = $body['choices'][0]['message']['content'] ?? '';
